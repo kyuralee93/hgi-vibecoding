@@ -1,3 +1,8 @@
+# hgi-vibecoding
+한화손보 바이브코딩 경진대회
+
+---
+
 # Global Risk Atlas v48
 
 v45를 기본 구조로 유지하고, v46의 해외계약 Intake 기능만 선별 반영한 버전입니다.
