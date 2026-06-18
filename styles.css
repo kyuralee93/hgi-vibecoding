@@ -290,3 +290,25 @@ th{background:#f7f8fa;color:#5b616b;font-weight:700}
 .brand h1{letter-spacing:-.01em}
 /* 화면에서는 숨기되 DOM/innerText는 유지(switchTab 제목 조회용) */
 .nav-hidden{position:absolute !important;width:1px;height:1px;padding:0 !important;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+
+
+/* =====================================================================
+ * v52: 누적위험 MapLibre 코로플레스 (툴팁/범례/모드 배지/로딩)
+ * ===================================================================== */
+#leafletMap{position:relative;background:#f4f5f7}
+#leafletMap .maplibregl-ctrl-attrib{font-size:10px}
+.rm-tooltip{position:absolute;z-index:5;pointer-events:none;background:#fff;border:1px solid #e9ebef;border-radius:13px;box-shadow:0 14px 36px rgba(20,20,20,.2);padding:13px 15px;min-width:210px;max-width:310px;display:none}
+.rm-tip-h{font-weight:800;font-size:14.5px;color:#1a1a1a;margin-bottom:2px}
+.rm-tip-kpi{font-size:12px;color:#e5300c;font-weight:800;margin-bottom:9px}
+.rm-tip-sub{font-size:12px;color:#8b9099}
+.rm-tip-tbl{width:100%;border-collapse:collapse}
+.rm-tip-tbl th,.rm-tip-tbl td{text-align:left;padding:4px 6px;font-size:11.5px;border-bottom:1px solid #f1f2f4}
+.rm-tip-tbl th{color:#8b9099;font-weight:700}
+.rm-tip-tbl td:nth-child(2),.rm-tip-tbl td:nth-child(3),.rm-tip-tbl th:nth-child(2),.rm-tip-tbl th:nth-child(3){text-align:right;white-space:nowrap}
+.rm-tip-foot{margin-top:8px;font-size:11px;color:#aab0ba}
+.rm-mode-badge{position:absolute;left:14px;top:14px;z-index:4;background:#1a1a1a;color:#fff;border-radius:999px;padding:7px 13px;font-size:12.5px;font-weight:700;box-shadow:0 6px 16px rgba(0,0,0,.22)}
+.rm-legend{position:absolute;left:14px;bottom:30px;z-index:4;background:rgba(255,255,255,.95);border:1px solid #e9ebef;border-radius:13px;padding:11px 13px;box-shadow:0 8px 20px rgba(20,20,20,.12)}
+.rm-legend b{display:block;margin-bottom:7px;color:#1a1a1a;font-size:12.5px}
+.rm-legend-bar{height:10px;width:168px;border-radius:6px;background:linear-gradient(90deg,#ffe7dc,#ff965a,#c81e0a)}
+.rm-legend-scale{display:flex;justify-content:space-between;margin-top:4px;font-size:11px;color:#8b9099}
+.rm-loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#8b9099;font-size:14px;font-weight:600;background:#f4f5f7;border-radius:18px;z-index:6}
