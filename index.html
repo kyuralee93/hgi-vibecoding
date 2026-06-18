@@ -11,8 +11,8 @@
 <body>
 <div id="loginScreen" class="login-screen">
   <div class="login-card">
-    <div class="login-logo">GRA</div>
-    <h1>글로벌 리스크 아틀라스</h1>
+    <div class="login-logo"><svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Global Risk Atlas"><defs><linearGradient id="graLogin" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FF7A47"/><stop offset="1" stop-color="#FA4616"/></linearGradient></defs><rect width="48" height="48" rx="14" fill="url(#graLogin)"/><circle cx="24" cy="24" r="13.2" fill="none" stroke="#fff" stroke-opacity=".24" stroke-width="1.3"/><path d="M10.8 24h26.4M24 10.8c4.6 4.1 4.6 22.3 0 26.4M24 10.8c-4.6 4.1-4.6 22.3 0 26.4" fill="none" stroke="#fff" stroke-opacity=".24" stroke-width="1.3"/><text x="24" y="28.7" text-anchor="middle" font-family="Pretendard,Arial,sans-serif" font-size="13" font-weight="800" letter-spacing=".4" fill="#fff">GRA</text></svg></div>
+    <h1>Global Risk Atlas</h1>
     <p>시연용에서는 아무 사번/패스워드 입력 후 바로 접속됩니다. 실제 운영 시 관리자 승인 후 접근하는 구조입니다.</p>
     <label>사번<input id="loginEmpNo" placeholder="예: 111"/></label>
     <label>패스워드<input id="loginPassword" type="password" placeholder="패스워드"/></label>
@@ -23,9 +23,10 @@
 
 <div class="app">
   <aside class="sidebar">
-    <div class="brand"><div class="logo">GRA</div><div><h1>글로벌 리스크 아틀라스</h1><p>계약 · 소재지 · 수재 · 기간계 마감 · 재보험</p></div></div>
+    <div class="brand" onclick="switchTab('dashboard')" title="대시보드로 이동"><div class="logo"><svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Global Risk Atlas"><defs><linearGradient id="graNav" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FF7A47"/><stop offset="1" stop-color="#FA4616"/></linearGradient></defs><rect width="48" height="48" rx="14" fill="url(#graNav)"/><circle cx="24" cy="24" r="13.2" fill="none" stroke="#fff" stroke-opacity=".24" stroke-width="1.3"/><path d="M10.8 24h26.4M24 10.8c4.6 4.1 4.6 22.3 0 26.4M24 10.8c-4.6 4.1-4.6 22.3 0 26.4" fill="none" stroke="#fff" stroke-opacity=".24" stroke-width="1.3"/><text x="24" y="28.7" text-anchor="middle" font-family="Pretendard,Arial,sans-serif" font-size="13" font-weight="800" letter-spacing=".4" fill="#fff">GRA</text></svg></div><div><h1>Global Risk Atlas</h1><p>계약 · 소재지 · 수재 · 기간계 마감 · 재보험</p></div></div>
     <nav>
-      <button class="nav-item top active" data-tab="dashboard">대시보드</button>
+      <!-- 대시보드 메뉴는 사이드바에서 숨김(좌측 상단 브랜드 클릭으로 이동). switchTab 제목 조회용으로만 유지 -->
+      <button class="nav-item nav-hidden" data-tab="dashboard">대시보드</button>
 
       <div class="nav-group">
         <div class="nav-group-head">해외계약 관리<span class="chev">▶</span></div>

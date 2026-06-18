@@ -277,3 +277,16 @@ th{background:#f7f8fa;color:#5b616b;font-weight:700}
 .todo-empty{color:var(--muted);background:#fff;border:1px dashed var(--line);border-radius:14px;padding:18px;text-align:center}
 
 @media(max-width:1000px){.dash-row{grid-template-columns:1fr}}
+
+
+/* =====================================================================
+ * v51: 영문 시스템명 + 세련된 GRA 아이콘 + 브랜드 클릭 이동 + 대시보드 메뉴 숨김
+ * ===================================================================== */
+.logo,.login-logo{background:none !important;overflow:hidden;padding:0}
+.logo svg,.login-logo svg{width:100%;height:100%;display:block}
+.login-logo{width:62px;height:62px;border-radius:16px}
+.brand{cursor:pointer;border-radius:12px;padding:6px 4px;transition:.12s}
+.brand:hover{background:#f6f7f9}
+.brand h1{letter-spacing:-.01em}
+/* 화면에서는 숨기되 DOM/innerText는 유지(switchTab 제목 조회용) */
+.nav-hidden{position:absolute !important;width:1px;height:1px;padding:0 !important;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
