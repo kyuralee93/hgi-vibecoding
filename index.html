@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>글로벌 리스크 아틀라스 v48</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css"/>
 <link rel="stylesheet" href="./styles.css"/>
 </head>
 <body>
@@ -24,37 +25,84 @@
   <aside class="sidebar">
     <div class="brand"><div class="logo">GRA</div><div><h1>글로벌 리스크 아틀라스</h1><p>계약 · 소재지 · 수재 · 기간계 마감 · 재보험</p></div></div>
     <nav>
-      <button class="active" data-tab="dashboard">대시보드</button>
-      <button data-tab="contract">계약조회</button>
-      <button data-tab="intake">해외계약 Intake</button>
-      <button data-tab="location">소재지 누적위험</button>
-      <button data-tab="inward">임의수재 계약관리</button>
-      <button data-tab="closing">마감·대사 관리</button>
-      <button data-tab="inwardClaim">해외수재 클레임</button>
-      <button data-tab="accident">사고데이터 관리</button>
-      <button data-tab="treaty">재보험 프로그램</button>
-      <button data-tab="impact">사고·재보험 영향분석</button>
-      <button data-tab="layer">Layer 소진 관리</button>
-      <button data-tab="reinstatement">복원보험료 계산</button>
-      <button data-tab="pnl">손익·PML 분석</button>
-      <button data-tab="docs">약관·특약 문서관리</button>
-      <button data-tab="copilot">AI Copilot</button>
-      <button data-tab="admin">관리자</button>
+      <button class="nav-item top active" data-tab="dashboard">대시보드</button>
+
+      <div class="nav-group">
+        <div class="nav-group-head">해외계약 관리<span class="chev">▶</span></div>
+        <div class="nav-group-body">
+          <button class="nav-item" data-tab="contract">계약 조회</button>
+          <button class="nav-item" data-tab="location">누적위험 조회</button>
+          <button class="nav-item" data-tab="intake">수재 관리</button>
+        </div>
+      </div>
+
+      <div class="nav-group">
+        <div class="nav-group-head">Claim 관리<span class="chev">▶</span></div>
+        <div class="nav-group-body">
+          <button class="nav-item" data-tab="accident">사고 조회</button>
+          <button class="nav-item" data-tab="inwardClaim">사고 관리</button>
+        </div>
+      </div>
+
+      <div class="nav-group">
+        <div class="nav-group-head">재보험 관리<span class="chev">▶</span></div>
+        <div class="nav-group-body">
+          <button class="nav-item" data-tab="treaty">보유 재보험 조회</button>
+          <button class="nav-item" data-tab="layer">프로그램/Layer 관리</button>
+          <button class="nav-item" data-tab="impact">영향분석 시뮬레이션</button>
+          <button class="nav-item" data-tab="reinstatement">복원보험료 계산</button>
+          <button class="nav-item" data-tab="pnl">손익/PML 분석</button>
+        </div>
+      </div>
+
+      <div class="nav-group">
+        <div class="nav-group-head">AI<span class="chev">▶</span></div>
+        <div class="nav-group-body">
+          <button class="nav-item" data-tab="copilot">약관 조회</button>
+        </div>
+      </div>
+
+      <button class="nav-item top" data-tab="admin">관리자</button>
+
+      <!-- 신규 IA에서 상위 노출 제외(기능은 유지): inward/closing/docs -->
+      <div class="nav-group" style="display:none">
+        <button class="nav-item" data-tab="inward">임의수재 계약관리</button>
+        <button class="nav-item" data-tab="closing">마감·대사 관리</button>
+        <button class="nav-item" data-tab="docs">약관·특약 문서관리</button>
+      </div>
     </nav>
   </aside>
   <main>
     <header class="topbar"><h2 id="pageTitle">대시보드</h2><div class="topbar-right"><div class="help-wrap"><button class="secondary-btn help-button" type="button">설명</button><div id="pageHelpTooltip" class="help-tooltip">오늘 처리할 업무와 주요 리스크를 한 화면에서 확인합니다.</div></div><span id="userBadge" class="user-badge">미로그인</span><button class="secondary-btn" onclick="logout()">로그아웃</button></div></header>
 
     <section id="dashboard" class="tab active">
-      <div class="kpi-grid">
-        <div class="kpi clickable" onclick="showDashboardList('renew')"><span>30일 이내 갱신계약</span><b id="kpiRenew">-</b><em><span class="data-badge">기간계 데이터</span> <span id="contractUpdate1"></span></em></div>
-        <div class="kpi clickable" onclick="showDashboardList('ppw')"><span>PPW 도래/미수</span><b id="kpiPPW">-</b><em>임의수재 수기 관리</em></div>
-        <div class="kpi"><span>사고데이터</span><b id="kpiAccident">-</b><em><span class="data-badge">기간계 데이터</span> + 수기/업로드</em></div>
-        <div class="kpi"><span>최고 Layer 소진율</span><b id="kpiLayer">-</b><em>Layer 수기 관리값 기준</em></div>
+      <div class="dash-group">
+        <div class="dash-group-title">해외계약 관리</div>
+        <div class="kpi-grid">
+          <div class="kpi"><span>최근 1년 원수보험료 합계</span><b id="d_premium">-</b><em>기간계 계약 기준</em></div>
+          <div class="kpi"><span>기 보유계약 건수</span><b id="d_contracts">-</b><em>유효 보유계약</em></div>
+          <div class="kpi clickable" onclick="showDashboardList('renew')"><span>30일 이내 갱신 도래</span><b id="d_renew">-</b><em>갱신 검토 대상</em></div>
+          <div class="kpi clickable" onclick="switchTab('intake')"><span>수재 중 기간계 미반영</span><b id="d_unreflected">-</b><em>원장 미등록 건</em></div>
+        </div>
       </div>
-      <div class="panel-grid">
-        <div class="panel"><h3>오늘 처리할 업무</h3><div id="todayTasks" class="card-list"></div><div id="dashboardList" class="dashboard-list"></div></div>
-        <div class="panel"><h3>재보험 Layer 소진 현황</h3><p class="muted">자동 매핑값이 아니라 재보험 담당자가 Layer 소진 관리 메뉴에서 저장한 값입니다.</p><div id="dashboardLayerBars"></div></div>
+
+      <div class="dash-row">
+        <div class="dash-group">
+          <div class="dash-group-title">Claim 관리</div>
+          <div class="kpi-grid k1">
+            <div class="kpi accent"><span>최근 1년 지급보험금 합계</span><b id="d_paid">-</b><em>Paid Loss 기준</em></div>
+          </div>
+        </div>
+        <div class="dash-group">
+          <div class="dash-group-title">재보험 관리 · Layer 소진 현황</div>
+          <div class="panel"><div id="dashboardLayerBars"></div></div>
+        </div>
+      </div>
+
+      <div class="dash-group">
+        <div class="dash-group-title">나의 할일</div>
+        <div id="myTasks" class="todo-list"></div>
+        <div id="dashboardList" class="dashboard-list"></div>
       </div>
     </section>
 

@@ -549,3 +549,175 @@
     init();
   }
 })();
+
+
+/* =====================================================================
+ * v50: 사이드바 아코디언 + 대시보드 재구성
+ * ===================================================================== */
+(function () {
+  'use strict';
+  const $ = (s, r) => (r || document).querySelector(s);
+  const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
+  const setText = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
+  const num = (v) => Number(v || 0);
+  function dd(dateStr) {
+    try { if (typeof dayDiff === 'function') return dayDiff(dateStr); } catch (e) {}
+    if (!dateStr) return 9999;
+    const t = new Date(dateStr).getTime();
+    if (isNaN(t)) return 9999;
+    return Math.round((t - Date.now()) / 86400000);
+  }
+  function eokFmt(v) {
+    try { if (typeof eok === 'function') return eok(v); } catch (e) {}
+    return Math.round(num(v)).toLocaleString() + '억원';
+  }
+
+  /* ---------- 아코디언 ---------- */
+  function openGroup(group) { if (group) group.classList.add('open'); }
+  function setupNav() {
+    $$('.nav-group-head').forEach(head => {
+      head.addEventListener('click', () => head.parentElement.classList.toggle('open'));
+    });
+    // 하위 메뉴 클릭 시 소속 그룹 자동 펼침(app.js가 switchTab은 이미 연결)
+    $$('nav .nav-item').forEach(item => {
+      item.addEventListener('click', () => {
+        const g = item.closest('.nav-group');
+        if (g) openGroup(g);
+      });
+    });
+    // 첫 진입 시 '해외계약 관리' 그룹을 펼쳐 둠
+    const first = $('.nav-group');
+    if (first && !first.querySelector('.nav-item.top')) openGroup(first);
+    // 현재 활성 탭이 속한 그룹 펼침
+    const active = $('nav .nav-item.active');
+    if (active) { const g = active.closest('.nav-group'); if (g) openGroup(g); }
+  }
+
+  /* ---------- 대시보드 ---------- */
+  function activeContracts() {
+    try { if (typeof allContracts === 'function') return allContracts(); } catch (e) {}
+    return (typeof DATA !== 'undefined' && DATA.contracts) ? DATA.contracts : [];
+  }
+  function renderLayerBars() {
+    const box = document.getElementById('dashboardLayerBars');
+    if (!box) return;
+    const layers = (typeof state !== 'undefined' && state.layers) ? state.layers : [];
+    if (!layers.length) { box.innerHTML = '<p class="muted" style="display:block">등록된 Layer 소진 데이터가 없습니다.</p>'; return; }
+    box.innerHTML = layers.slice(0, 8).map(l => {
+      const limit = Math.max(1, num(l.baseLimitEok) + num(l.reinstatedLimitEok));
+      const burn = (num(l.paidUsedEok) + num(l.outstandingUsedEok)) / limit * 100;
+      return `<div class="layer-row"><b>${l.treatyName} / ${l.layer}</b><br>` +
+        `Paid ${eokFmt(l.paidUsedEok)} + OS ${eokFmt(l.outstandingUsedEok)} / 한도 ${eokFmt(num(l.baseLimitEok) + num(l.reinstatedLimitEok))}` +
+        `<div class="track"><span style="width:${Math.min(100, burn)}%"></span></div></div>`;
+    }).join('');
+  }
+
+  function buildTasks() {
+    const S = (typeof state !== 'undefined') ? state : {};
+    const fac = Array.isArray(S.fac) ? S.fac : [];
+    const claims = Array.isArray(S.inwardClaims) ? S.inwardClaims : [];
+    const tasks = [];
+
+    // 1) PPW 미수/도래
+    let ppw = [];
+    try { if (typeof ppwRows === 'function') ppw = ppwRows(); } catch (e) {}
+    ppw.forEach(f => {
+      const overdue = f.receivableStatus && f.receivableStatus !== '정상';
+      const d = dd(f.ppwDate);
+      tasks.push({
+        weight: overdue ? 0 : 1, dday: d, tag: 'PPW', cls: 'ppw', tab: 'intake',
+        title: `PPW ${overdue ? '미수 회수' : '도래 점검'} — ${f.insured || '-'}`,
+        meta: `${f.inwardRef || ''} · PPW ${f.ppwDate || '-'} · ${f.receivableStatus || ''}`
+      });
+    });
+
+    // 2) 수재 중 기간계 미반영
+    fac.filter(f => f.closeStatus !== '대사완료' && !f.policyNoLinked).forEach(f => {
+      tasks.push({
+        weight: 2, dday: 50, tag: '수재', cls: 'intake', tab: 'intake',
+        title: `기간계 미반영 수재 등록 — ${f.insured || '-'}`,
+        meta: `${f.inwardRef || ''} · ${f.country || ''} ${f.city || ''} · ${f.line || ''}`
+      });
+    });
+
+    // 3) Claim Survey 진행중
+    claims.filter(c => {
+      const st = c.status || '';
+      return st && !/완결|종결|완료|closed/i.test(st);
+    }).forEach(c => {
+      tasks.push({
+        weight: 2, dday: 60, tag: 'Claim', cls: 'claim', tab: 'inwardClaim',
+        title: `Survey 진행 점검 — ${c.insured || '-'}`,
+        meta: `${c.claimNo || ''} · ${c.cause || ''} · ${c.status || ''}`
+      });
+    });
+
+    // 4) 30일 이내 갱신 도래
+    let renew = [];
+    try { if (typeof renewRows === 'function') renew = renewRows(); } catch (e) {}
+    renew.forEach(c => {
+      tasks.push({
+        weight: 3, dday: dd(c.renewalDate), tag: '갱신', cls: 'renew', tab: 'contract',
+        title: `갱신 도래 계약 검토 — ${c.insured || '-'}`,
+        meta: `${c.policyNo || ''} · ${c.country || ''} · 만기 ${c.renewalDate || '-'}`
+      });
+    });
+
+    tasks.sort((a, b) => (a.weight - b.weight) || (a.dday - b.dday));
+    return tasks;
+  }
+
+  function renderMyTasks() {
+    const box = document.getElementById('myTasks');
+    if (!box) return;
+    const tasks = buildTasks().slice(0, 12);
+    if (!tasks.length) { box.innerHTML = '<div class="todo-empty">처리할 우선 업무가 없습니다. 👍</div>'; return; }
+    box.innerHTML = tasks.map((t, i) => {
+      const urgent = t.dday <= 7;
+      const ddText = t.dday >= 9000 ? '' : (t.dday >= 0 ? `D-${t.dday}` : `D+${-t.dday}`);
+      return `<div class="todo-item" onclick="switchTab('${t.tab}')">` +
+        `<div class="todo-rank">${i + 1}</div>` +
+        `<span class="todo-tag ${t.cls}">${t.tag}</span>` +
+        `<div class="todo-main"><div class="todo-title">${t.title}</div><div class="todo-meta">${t.meta}</div></div>` +
+        `<div class="todo-dday ${urgent ? 'urgent' : ''}">${ddText}</div></div>`;
+    }).join('');
+  }
+
+  function renderDashboardV50() {
+    try { if (typeof setMetaText === 'function') setMetaText(); } catch (e) {}
+    const S = (typeof state !== 'undefined') ? state : {};
+    const contracts = activeContracts();
+    const fac = Array.isArray(S.fac) ? S.fac : [];
+    const accidents = Array.isArray(S.accidents) ? S.accidents : [];
+
+    const premium = contracts.reduce((s, c) => s + num(c.premiumEok), 0);
+    setText('d_premium', Math.round(premium).toLocaleString() + '억원');
+    setText('d_contracts', contracts.length.toLocaleString() + '건');
+
+    let renewN = 0;
+    try { if (typeof renewRows === 'function') renewN = renewRows().length; } catch (e) {}
+    setText('d_renew', renewN + '건');
+
+    const unreflected = fac.filter(f => f.closeStatus !== '대사완료' && !f.policyNoLinked).length;
+    setText('d_unreflected', unreflected + '건');
+
+    const paid = accidents.reduce((s, a) => s + num(a.paidLossEok != null ? a.paidLossEok : a.grossLossEok), 0);
+    setText('d_paid', Math.round(paid).toLocaleString() + '억원');
+
+    renderLayerBars();
+    renderMyTasks();
+  }
+
+  function init() {
+    setupNav();
+    // app.js의 renderDashboard를 v50 버전으로 교체(switchTab에서도 이 함수가 호출됨)
+    window.renderDashboard = renderDashboardV50;
+    try { renderDashboardV50(); } catch (e) { /* 데이터 준비 전이면 무시 */ }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
