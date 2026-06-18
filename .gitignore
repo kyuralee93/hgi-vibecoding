@@ -1,0 +1,13 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# 로컬 미리보기/실행 설정 (머신 종속)
+.claude/
+
+# 에디터
+.vscode/
+.idea/
+
+# 로그/임시
+*.log
