@@ -1,0 +1,202 @@
+// 해외 재보험 관리시스템 데이터 모델
+// 기존 프로토타입의 const DATA(9개 컬렉션)를 정식 테이블로 전환하고
+// Accident→Contract, InwardClaim→FacInward 관계를 외래키로 보장합니다.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// 기간계 수재계약 (공식 원천)
+model Contract {
+  policyNo     String     @id
+  insured      String
+  country      String
+  city         String
+  lat          Float?
+  lng          Float?
+  line         String
+  industry     String?
+  tsiEok       Float      @default(0)
+  premiumEok   Float      @default(0)
+  currency     String     @default("KRW")
+  sourceType   String?
+  sourceSystem String?
+  renewalDate  String?
+  status       String?
+  lossRatio    Float?
+  expenseRatio Float?
+}
+
+// 임의수재 계약
+model FacInward {
+  inwardRef          String        @id
+  insured            String
+  country            String
+  city               String
+  lat                Float?
+  lng                Float?
+  line               String
+  industry           String?
+  tsiEok             Float         @default(0)
+  premiumOriginal    Float         @default(0)
+  currency           String        @default("USD")
+  fxRate             Float?
+  premiumEok         Float         @default(0)
+  cedant             String?
+  slipSummary        String?
+  memo               String?
+  ppwDate            String?
+  receivableStatus   String?
+  owner              String?
+  receivableOwner    String?
+  receivableUpdatedAt String?
+  sourceType         String?
+  sourceSystem       String?
+  status             String?
+}
+
+// 기간계 사고계약 데이터
+model Accident {
+  claimNo            String   @id
+  policyNo           String
+  insured            String
+  country            String?
+  city               String?
+  line               String?
+  cause              String?
+  paidLossEok        Float    @default(0)
+  outstandingLossEok Float    @default(0)
+  grossLossEok       Float    @default(0)
+  claimDate          String?
+  status             String?
+  sourceType         String?
+  sourceSystem       String?
+  memo               String?
+  uploadBatch        String?
+
+  @@index([policyNo])
+}
+
+// 해외수재 클레임
+model InwardClaim {
+  claimNo          String    @id
+  inwardRef        String
+  insured          String
+  cedant           String?
+  country          String?
+  city             String?
+  line             String?
+  cause            String?
+  estimatedLossEok Float     @default(0)
+  noticeDate       String?
+  surveyStatus     String?
+  surveyPdf        String?
+  status           String?
+  sourceType       String?
+
+  @@index([inwardRef])
+}
+
+// 약관·특약 문서
+model Document {
+  docId           String  @id
+  title           String
+  type            String?
+  keywords        String?
+  file            String?
+  sourceType      String?
+  treatyId        String?
+  platformFeature String?
+}
+
+// 재보험 프로그램(Treaty)
+model Treaty {
+  treatyId    String        @id
+  name        String
+  type        String?
+  description String?
+  exclusions  String        @default("[]") // JSON 문자열 배열
+  layers      TreatyLayer[]
+}
+
+model TreatyLayer {
+  id       String @id @default(cuid())
+  treatyId String
+  layer    String
+  from     Float  @default(0)
+  to       Float  @default(0)
+  lead     String?
+  treaty   Treaty @relation(fields: [treatyId], references: [treatyId], onDelete: Cascade)
+
+  @@index([treatyId])
+}
+
+// Layer 소진 현황
+model LayerStatus {
+  statusId           String       @id
+  treatyId           String
+  treatyName         String?
+  layer              String
+  baseLimitEok       Float        @default(0)
+  paidUsedEok        Float        @default(0)
+  outstandingUsedEok Float        @default(0)
+  reinstatedLimitEok Float        @default(0)
+  updatedBy          String?
+  updatedAt          String?
+  layerClaims        LayerClaim[]
+}
+
+model LayerClaim {
+  id                 String      @id @default(cuid())
+  statusId           String
+  claimNo            String
+  policyNo           String?
+  insured            String?
+  paidLossEok        Float       @default(0)
+  outstandingLossEok Float       @default(0)
+  note               String?
+  layerStatus        LayerStatus @relation(fields: [statusId], references: [statusId], onDelete: Cascade)
+
+  @@index([statusId])
+}
+
+// 환율
+model FxRate {
+  currency String @id
+  rate     Float
+}
+
+// 앱 메타(마감일자 등 key-value)
+model AppMeta {
+  key   String @id
+  value String
+}
+
+// 사용자 / 권한 (신규)
+model User {
+  id           String   @id @default(cuid())
+  empNo        String   @unique
+  passwordHash String
+  name         String?
+  role         String   @default("USER") // ADMIN / UW / CLAIM / GLOBAL / USER
+  approved     Boolean  @default(false)
+  createdAt    DateTime @default(now())
+}
+
+// 변경 감사 로그 (신규)
+model AuditLog {
+  id        String   @id @default(cuid())
+  entity    String
+  entityId  String?
+  action    String
+  actor     String?
+  detail    String?
+  createdAt DateTime @default(now())
+
+  @@index([entity, entityId])
+}

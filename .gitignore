@@ -1,0 +1,9 @@
+node_modules/
+server/node_modules/
+.env
+server/.env
+server/generated/
+uploads/
+*.log
+.DS_Store
+app.js.prebootstrap.bak

@@ -1,0 +1,36 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: gra
+      POSTGRES_PASSWORD: gra
+      POSTGRES_DB: gra
+    ports:
+      - "5433:5432"        # 로컬 DB GUI/개발 접속용 (호스트 5433 → 컨테이너 5432)
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gra"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  server:
+    build: ./server
+    environment:
+      DATABASE_URL: postgresql://gra:gra@db:5432/gra
+      CLIENT_DIR: /client
+      PORT: 3000
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      AI_MODEL: ${AI_MODEL:-claude-opus-4-8}
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./client:/client          # 프론트엔드 수정 시 재빌드 불필요
+      - ./uploads:/app/uploads     # 업로드 파일 보존
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:

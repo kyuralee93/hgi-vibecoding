@@ -1,0 +1,23 @@
+{
+  "name": "global-risk-atlas-server",
+  "version": "1.0.0",
+  "description": "해외 재보험 관리시스템 API 서버",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "dev": "node index.js",
+    "start": "node index.js",
+    "db:push": "prisma db push",
+    "seed": "node prisma/seed.js",
+    "setup": "prisma generate && prisma db push && node prisma/seed.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.105.0",
+    "@prisma/client": "^5.22.0",
+    "cors": "^2.8.5",
+    "express": "^4.21.2"
+  },
+  "devDependencies": {
+    "prisma": "^5.22.0"
+  }
+}
