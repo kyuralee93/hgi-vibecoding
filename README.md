@@ -50,6 +50,8 @@ docker compose up -d --build
 - `POST /api/sync` — 가변 컬렉션(fac/accidents/inwardClaims/docs/layers/meta) 서버 반영
 - `GET /api/ai/status` — AI 활성화 여부(키 설정 시 true)
 - `POST /api/ai/survey-summary` · `doc-summary` · `doc-translate` · `extract-slip` — Claude API. 키 미설정 시 "시연 샘플" 목업으로 자동 폴백
+- `POST /api/auth/register` · `login` · `GET /api/auth/me` — 인증(bcrypt 해시 + JWT)
+- `GET /api/users` · `POST /api/users/:id/approve` · `/role` · `DELETE` — 사용자 관리(ADMIN 전용)
 
 화면은 더 이상 인라인 데이터를 쓰지 않고, 페이지 로드 시 `/api/bootstrap.js`로 DB의 데이터를 받아 렌더링합니다(모든 PC에서 동일 데이터). 등록/수정/삭제는 `localStorage.setItem`을 가로채는 단일 훅에서 디바운스(500ms)로 `/api/sync`에 전송되어 DB에 영속됩니다.
 
@@ -58,9 +60,13 @@ docker compose up -d --build
 1. ✅ **서버 골격 + DB 스키마 + 시드 + Docker Compose**
 2. ✅ **읽기: 화면을 서버 데이터로 전환**(부트스트랩 주입, 240/113/85/35건 브라우저 검증)
 3. ✅ **쓰기: 등록/수정/삭제를 서버 동기화**(UI 등록→새로고침 후 DB 유지 브라우저 검증)
+4. ✅ **인증·권한(RBAC) + 승인 워크플로**(bcrypt+JWT, 역할별 메뉴, 관리자 승인/역할/삭제)
 5. ✅ **Claude API 연동**(서베이 요약·약관 PDF 요약·번역·Slip 추출). 키 없으면 시연 샘플 목업 폴백
-4. 인증·권한(RBAC) + 승인 워크플로 ← 다음
-6. 감사로그 + 계산검증 + 코드 정리
+6. 감사로그 + 계산검증 + 코드 정리 ← 다음
+
+### 로그인 / 권한
+
+데모 계정 — 관리자 `admin / admin1234`, 글로벌사업부 `111 / demo1234`. 신규 사용자는 [사번 등록] 후 관리자 승인을 받아야 로그인됩니다. 역할(ADMIN/GLOBAL/UW/CLAIM/USER)별로 보이는 메뉴가 달라지며, 사용자 관리·승인은 ADMIN만 가능합니다. (JWT 비밀키는 `.env`의 `JWT_SECRET`로 운영 시 교체)
 
 ### AI 기능 사용 (선택)
 

@@ -21,6 +21,7 @@ const fs = require('fs');
 const express = require('express');
 const cors = require('cors');
 const prisma = require('./db');
+const auth = require('./services/auth');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -270,6 +271,84 @@ app.post('/api/sync', async (req, res) => {
     console.error('[sync] 실패:', e);
     res.status(500).json({ error: e.message });
   }
+});
+
+// --- 인증·권한 (auth) --------------------------------------------------
+function safeUser(u) {
+  return { id: u.id, empNo: u.empNo, name: u.name, role: u.role, approved: u.approved, createdAt: u.createdAt };
+}
+
+// 회원가입(승인대기) — 사번/비번/이름
+app.post('/api/auth/register', async (req, res) => {
+  try {
+    const empNo = String((req.body || {}).empNo || '').trim();
+    const password = String((req.body || {}).password || '');
+    const name = String((req.body || {}).name || '').trim();
+    if (!empNo || !password) return res.status(400).json({ error: '사번과 패스워드를 입력하세요.' });
+    if (password.length < 4) return res.status(400).json({ error: '패스워드는 4자 이상이어야 합니다.' });
+    const dup = await prisma.user.findUnique({ where: { empNo } });
+    if (dup) return res.status(409).json({ error: '이미 등록된 사번입니다.' });
+    const user = await prisma.user.create({
+      data: { empNo, name, passwordHash: auth.hashPassword(password), role: 'USER', approved: false },
+    });
+    await prisma.auditLog.create({ data: { entity: 'User', entityId: user.id, action: 'register', actor: empNo, detail: name } });
+    res.json({ ok: true, message: '가입 신청 완료. 관리자 승인 후 로그인할 수 있습니다.', user: safeUser(user) });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// 로그인 — 승인된 계정만 토큰 발급
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const empNo = String((req.body || {}).empNo || '').trim();
+    const password = String((req.body || {}).password || '');
+    const user = await prisma.user.findUnique({ where: { empNo } });
+    if (!user || !auth.verifyPassword(password, user.passwordHash)) {
+      return res.status(401).json({ error: '사번 또는 패스워드가 올바르지 않습니다.' });
+    }
+    if (!user.approved) return res.status(403).json({ error: '승인 대기 중인 계정입니다. 관리자 승인 후 이용하세요.' });
+    res.json({ token: auth.signToken(user), user: safeUser(user) });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// 현재 사용자
+app.get('/api/auth/me', auth.requireAuth, async (req, res) => {
+  const user = await prisma.user.findUnique({ where: { id: req.user.sub } });
+  if (!user) return res.status(404).json({ error: '사용자 없음' });
+  res.json({ user: safeUser(user) });
+});
+
+// --- 사용자 관리 (ADMIN 전용) ------------------------------------------
+app.get('/api/users', auth.requireRole('ADMIN'), async (req, res) => {
+  const users = await prisma.user.findMany({ orderBy: [{ approved: 'asc' }, { createdAt: 'asc' }] });
+  res.json({ users: users.map(safeUser), roles: auth.ROLES });
+});
+
+app.post('/api/users/:id/approve', auth.requireRole('ADMIN'), async (req, res) => {
+  try {
+    const approved = (req.body || {}).approved !== false;
+    const user = await prisma.user.update({ where: { id: req.params.id }, data: { approved } });
+    await prisma.auditLog.create({ data: { entity: 'User', entityId: user.id, action: approved ? 'approve' : 'unapprove', actor: req.user.empNo } });
+    res.json({ user: safeUser(user) });
+  } catch (e) { res.status(400).json({ error: e.message }); }
+});
+
+app.post('/api/users/:id/role', auth.requireRole('ADMIN'), async (req, res) => {
+  try {
+    const role = String((req.body || {}).role || '');
+    if (!auth.ROLES.includes(role)) return res.status(400).json({ error: '유효하지 않은 역할입니다.' });
+    const user = await prisma.user.update({ where: { id: req.params.id }, data: { role } });
+    await prisma.auditLog.create({ data: { entity: 'User', entityId: user.id, action: 'role', actor: req.user.empNo, detail: role } });
+    res.json({ user: safeUser(user) });
+  } catch (e) { res.status(400).json({ error: e.message }); }
+});
+
+app.delete('/api/users/:id', auth.requireRole('ADMIN'), async (req, res) => {
+  try {
+    if (req.params.id === req.user.sub) return res.status(400).json({ error: '본인 계정은 삭제할 수 없습니다.' });
+    const user = await prisma.user.delete({ where: { id: req.params.id } });
+    await prisma.auditLog.create({ data: { entity: 'User', entityId: user.id, action: 'delete', actor: req.user.empNo, detail: user.empNo } });
+    res.json({ ok: true });
+  } catch (e) { res.status(400).json({ error: e.message }); }
 });
 
 // --- AI (Claude API) ---------------------------------------------------

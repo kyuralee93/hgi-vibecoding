@@ -23,6 +23,7 @@ services:
       PORT: 3000
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       AI_MODEL: ${AI_MODEL:-claude-opus-4-8}
+      JWT_SECRET: ${JWT_SECRET:-gra-dev-secret-change-me}
     ports:
       - "3000:3000"
     volumes:

@@ -12,11 +12,13 @@
   <div class="login-card">
     <div class="login-logo">GRA</div>
     <h1>글로벌 리스크 아틀라스</h1>
-    <p>시연용에서는 아무 사번/패스워드 입력 후 바로 접속됩니다. 실제 운영 시 관리자 승인 후 접근하는 구조입니다.</p>
+    <p>사번·패스워드로 로그인합니다. 신규 사용자는 사번 등록 후 관리자 승인을 받아야 접근할 수 있습니다.</p>
     <label>사번<input id="loginEmpNo" placeholder="예: 111"/></label>
     <label>패스워드<input id="loginPassword" type="password" placeholder="패스워드"/></label>
-    <div class="login-actions"><button onclick="login()">로그인</button><button class="secondary-btn" onclick="login()">사번 등록</button></div>
-    <div class="demo-note">시연용: 로그인 후 모든 메뉴를 확인할 수 있습니다.</div>
+    <label id="loginNameWrap" style="display:none">이름<input id="loginName" placeholder="등록 시 이름"/></label>
+    <div class="login-actions"><button onclick="login()">로그인</button><button class="secondary-btn" onclick="register()">사번 등록</button></div>
+    <div id="loginMsg" class="mini-msg"></div>
+    <div class="demo-note">데모 계정 — 관리자: admin / admin1234 · 글로벌사업부: 111 / demo1234</div>
   </div>
 </div>
 

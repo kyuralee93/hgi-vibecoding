@@ -5,6 +5,24 @@
 const fs = require('fs');
 const path = require('path');
 const prisma = require('../db');
+const auth = require('../services/auth');
+
+// 기본 사용자(관리자/시연용)는 데이터 가드와 무관하게 항상 보장(없으면 생성)
+async function seedUsers() {
+  const defaults = [
+    { empNo: 'admin', name: '시스템 관리자', role: 'ADMIN', approved: true, password: 'admin1234' },
+    { empNo: '111', name: '글로벌사업부 데모', role: 'GLOBAL', approved: true, password: 'demo1234' },
+  ];
+  for (const u of defaults) {
+    const exists = await prisma.user.findUnique({ where: { empNo: u.empNo } });
+    if (!exists) {
+      await prisma.user.create({
+        data: { empNo: u.empNo, name: u.name, role: u.role, approved: u.approved, passwordHash: auth.hashPassword(u.password) },
+      });
+      console.log(`[seed] 사용자 생성: ${u.empNo} (${u.role})`);
+    }
+  }
+}
 
 const DATA = JSON.parse(
   fs.readFileSync(path.join(__dirname, 'seed-data.json'), 'utf8')
@@ -27,10 +45,12 @@ async function clearAll() {
 
 async function main() {
   const force = process.env.SEED_FORCE === '1';
-  const existing = await prisma.contract.count();
 
+  await seedUsers(); // 사용자 시드는 항상 실행(멱등)
+
+  const existing = await prisma.contract.count();
   if (existing > 0 && !force) {
-    console.log(`[seed] 이미 ${existing}건의 계약이 존재 — 건너뜀 (재적재: SEED_FORCE=1)`);
+    console.log(`[seed] 이미 ${existing}건의 계약이 존재 — 데이터 시드는 건너뜀 (재적재: SEED_FORCE=1)`);
     return;
   }
   if (force) {
