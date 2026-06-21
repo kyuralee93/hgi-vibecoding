@@ -28,8 +28,16 @@
   function applyRoleMenu(role) {
     var allow = allowedTabs(role);
     document.querySelectorAll('.sidebar nav button[data-tab]').forEach(function (b) {
+      if (b.classList.contains('nav-hidden')) return; // 대시보드(배너로 이동) 항상 숨김
       var ok = !allow || allow.indexOf(b.getAttribute('data-tab')) >= 0;
       b.style.display = ok ? '' : 'none';
+    });
+    // 표시할 버튼이 하나도 없는 카테고리는 제목까지 숨김
+    document.querySelectorAll('.sidebar nav .nav-group').forEach(function (g) {
+      var anyVisible = [].slice.call(g.querySelectorAll('button[data-tab]')).some(function (b) {
+        return !b.classList.contains('nav-hidden') && b.style.display !== 'none';
+      });
+      g.style.display = anyVisible ? '' : 'none';
     });
   }
 

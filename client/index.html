@@ -5,54 +5,99 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>글로벌 리스크 아틀라스 v56</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/3.31.0/tabler-icons.min.css"/>
 <link rel="stylesheet" href="./styles.css"/>
 <link rel="stylesheet" href="./ux-polish.css"/>
+<link rel="stylesheet" href="./theme-gra.css"/>
 </head>
 <body>
 <div id="loginScreen" class="login-screen">
-  <div class="login-card">
-    <div class="login-logo">GRA</div>
-    <h1>글로벌 리스크 아틀라스</h1>
-    <p>등록된 사번으로 로그인하세요. 신규 사번은 [사번 등록] 후 관리자 승인을 받아야 접근할 수 있습니다.</p>
-    <label>사번<input id="loginEmpNo" placeholder="예: 111"/></label>
-    <label>패스워드<input id="loginPassword" type="password" placeholder="패스워드"/></label>
-    <label id="loginNameWrap" style="display:none">이름<input id="loginName" placeholder="등록 시 이름"/></label>
-    <div class="login-actions"><button onclick="login()">로그인</button><button class="secondary-btn" onclick="register()">사번 등록</button></div>
-    <div id="loginMsg" class="mini-msg"></div>
-    <div class="demo-note">데모 계정 — 관리자: admin / admin1234 · 글로벌사업부: 111 / demo1234</div>
+  <div class="login-split">
+    <div class="login-hero">
+      <div class="hero-top"><div class="gra-badge" style="width:36px;height:36px;border-radius:10px"><svg class="bgrid" viewBox="0 0 36 36" fill="none"><ellipse cx="18" cy="18" rx="6.8" ry="16.5" stroke="#fff" stroke-width="1" opacity=".35"/><line x1="2" y1="18" x2="34" y2="18" stroke="#fff" stroke-width="1" opacity=".35"/></svg><span class="bw" style="font-size:15px">GRA</span></div><span class="brand-en" style="border:0;padding:0;font-size:16px">Global Risk Atlas</span></div>
+      <img class="hero-map" src="./worldmap_mid.png" onerror="this.onerror=null;this.src='./world-map.svg'" alt="" aria-hidden="true"/>
+      <div class="login-features">
+        <div class="login-feature"><div class="lf-ic"><i class="ti ti-world"></i></div><div><b>글로벌 리스크 가시성</b><span>전 세계 리스크를 한눈에 파악하고 선제적으로 대응</span></div></div>
+        <div class="login-feature"><div class="lf-ic"><i class="ti ti-shield-check"></i></div><div><b>계약 통합 관리</b><span>보험 계약 정보를 통합 관리하여 운영 효율성 향상</span></div></div>
+        <div class="login-feature"><div class="lf-ic"><i class="ti ti-chart-bar"></i></div><div><b>데이터 기반 의사결정</b><span>정확한 데이터와 인사이트로 신속·합리적 의사결정 지원</span></div></div>
+        <div class="login-feature"><div class="lf-ic"><i class="ti ti-lock"></i></div><div><b>컴플라이언스 & 보안</b><span>엄격한 보안과 컴플라이언스로 신뢰할 수 있는 운영</span></div></div>
+      </div>
+    </div>
+    <div class="login-panel">
+      <div class="login-card">
+        <div class="login-brand"><div class="gra-badge" style="width:74px;height:74px;border-radius:19px"><svg class="bgrid" viewBox="0 0 74 74" fill="none"><ellipse cx="37" cy="37" rx="13.5" ry="33" stroke="#fff" stroke-width="1.5" opacity=".35"/><ellipse cx="37" cy="37" rx="27" ry="33" stroke="#fff" stroke-width="1.1" opacity=".24"/><line x1="4" y1="37" x2="70" y2="37" stroke="#fff" stroke-width="1.5" opacity=".35"/><path d="M11 22H63M11 52H63" stroke="#fff" stroke-width="1" opacity=".28"/></svg><span class="bw" style="font-size:31px">GRA</span></div></div>
+        <h1>Global Risk Atlas</h1>
+        <div class="login-sub">리스크 · 계약정보 통합운영 플랫폼</div>
+        <div class="field"><i class="ti ti-user"></i><input id="loginEmpNo" placeholder="사번" onkeydown="if(event.key==='Enter')login()"/></div>
+        <div class="field"><i class="ti ti-lock"></i><input id="loginPassword" type="password" placeholder="패스워드" onkeydown="if(event.key==='Enter')login()"/></div>
+        <label id="loginNameWrap" style="display:none">이름<input id="loginName" placeholder="등록 시 이름"/></label>
+        <div class="login-actions"><button onclick="login()">로그인</button><button class="secondary-btn" onclick="register()">사번 등록</button></div>
+        <div id="loginMsg" class="mini-msg"></div>
+        <div class="demo-note"><b style="color:var(--ink)">데모 계정</b><br>관리자 : admin / admin1234<br>사용자 : 111 / demo1234</div>
+      </div>
+    </div>
   </div>
 </div>
 
 <div class="app">
+  <header class="appbar">
+    <div class="gra-mark" onclick="switchTab('dashboard')" style="cursor:pointer" title="대시보드로 이동">
+      <div class="gra-badge" style="width:40px;height:40px"><svg class="bgrid" viewBox="0 0 40 40" fill="none"><ellipse cx="20" cy="20" rx="7.5" ry="18" stroke="#fff" stroke-width="1" opacity=".35"/><ellipse cx="20" cy="20" rx="14" ry="18" stroke="#fff" stroke-width="0.8" opacity=".22"/><line x1="2" y1="20" x2="38" y2="20" stroke="#fff" stroke-width="1" opacity=".35"/></svg><span class="bw" style="font-size:16px">GRA</span></div>
+      <div class="brand-names"><span class="brand-en">Global Risk Atlas</span><span class="brand-ko">리스크 · 계약정보 통합운영 플랫폼</span></div>
+    </div>
+    <div class="appbar-right">
+      <span class="ab-item"><i class="ti ti-world"></i>한국어<i class="ti ti-chevron-down"></i></span>
+      <span class="ab-item"><i class="ti ti-shield"></i>보안공지</span>
+      <span class="ab-sep"></span>
+      <span class="ab-item"><i class="ti ti-bell"></i></span>
+      <span class="user-chip"><i class="ti ti-user-circle"></i><span id="userBadge">미로그인</span></span>
+      <button class="secondary-btn" onclick="logout()">로그아웃</button>
+    </div>
+  </header>
+  <div class="app-body">
   <aside class="sidebar">
-    <div class="brand"><div class="logo">GRA</div><div><h1>글로벌 리스크 아틀라스</h1><p>해외수재 · 누적위험 · 사고계약 · 재보험</p></div></div>
     <nav>
-      <button class="active" data-tab="dashboard">대시보드</button>
-      <button data-tab="intake">해외계약 접수</button>
-      <button data-tab="inward">수재계약 입력관리</button>
-      <button data-tab="contract">출재·수재계약 조회</button>
-      <button data-tab="location">소재지 누적위험</button>
-      <button data-tab="inwardClaim">해외수재 클레임</button>
-      <button data-tab="accident">사고계약 데이터</button>
-      <button data-tab="treaty">재보험 프로그램</button>
-      <button data-tab="impact">사고·재보험 영향분석</button>
-      <button data-tab="layer">Layer 소진 관리</button>
-      <button data-tab="reinstatement">복원보험료 계산</button>
-      <button data-tab="docs">약관·특약 문서관리</button>
-      <button data-tab="reinsAdmin">재보험 프로그램 설정</button>
-      <button data-tab="admin">관리자</button>
+      <button data-tab="dashboard" class="nav-hidden">대시보드</button>
+      <div class="nav-group">
+        <div class="nav-group-title">계약 관리</div>
+        <button data-tab="intake"><i class="ti ti-inbox"></i>해외계약 접수</button>
+        <button data-tab="inward"><i class="ti ti-clipboard"></i>수재계약 입력관리</button>
+        <button data-tab="contract"><i class="ti ti-search"></i>출재·수재계약 조회</button>
+      </div>
+      <div class="nav-group">
+        <div class="nav-group-title">리스크 관리</div>
+        <button data-tab="location"><i class="ti ti-map-pin"></i>소재지 누적위험</button>
+        <button data-tab="inwardClaim"><i class="ti ti-alert-triangle"></i>해외수재 클레임</button>
+      </div>
+      <div class="nav-group">
+        <div class="nav-group-title">재보험 분석</div>
+        <button data-tab="treaty"><i class="ti ti-shield"></i>재보험 프로그램</button>
+        <button data-tab="accident"><i class="ti ti-bolt"></i>사고계약 데이터</button>
+        <button data-tab="impact"><i class="ti ti-affiliate"></i>사고·재보험 영향분석</button>
+        <button data-tab="layer"><i class="ti ti-stack-2"></i>Layer 소진 관리</button>
+        <button data-tab="reinstatement"><i class="ti ti-calculator"></i>복원보험료 계산</button>
+      </div>
+      <div class="nav-group">
+        <div class="nav-group-title">문서/지식 관리</div>
+        <button data-tab="docs"><i class="ti ti-file-text"></i>약관·특약 문서관리</button>
+      </div>
+      <div class="nav-group">
+        <div class="nav-group-title">시스템 관리</div>
+        <button data-tab="reinsAdmin"><i class="ti ti-settings"></i>재보험 프로그램 설정</button>
+        <button data-tab="admin"><i class="ti ti-users"></i>관리자</button>
+      </div>
     </nav>
   </aside>
   <main>
-    <header class="topbar"><h2 id="pageTitle">대시보드</h2><div class="topbar-right"><span id="userBadge" class="user-badge">미로그인</span><button class="secondary-btn" onclick="logout()">로그아웃</button></div></header>
+    <header class="topbar"><h2 id="pageTitle">대시보드</h2></header>
 
     <section id="dashboard" class="tab active">
       <p class="muted" style="margin:0 0 12px">오늘 처리할 업무(검토 중 오퍼·수재확정 미입력·PPW 도래)와 재보험 Layer 소진 현황을 한 화면에서 확인합니다.</p>
       <div class="kpi-grid">
-        <div class="kpi clickable" onclick="showDashboardList('renew')"><span>30일 이내 갱신계약</span><b id="kpiRenew">-</b><em><span class="data-badge">기간계 수재계약</span> <span id="contractUpdate1"></span></em></div>
-        <div class="kpi clickable" onclick="showDashboardList('ppw')"><span>PPW 도래계약</span><b id="kpiPPW">-</b><em><span class="data-badge">기간계 체결 수재계약</span></em></div>
-        <div class="kpi clickable" onclick="switchTab('accident')"><span>사고계약 데이터</span><b id="kpiAccident">-</b><em><span class="data-badge">기간계 사고계약</span></em></div>
-        <div class="kpi"><span>최고 Layer 소진율</span><b id="kpiLayer">-</b><em>사고계약 기반 Layer 관리</em></div>
+        <div class="kpi clickable" onclick="showDashboardList('renew')"><div class="kpi-ic"><i class="ti ti-calendar"></i></div><div class="kpi-body"><span>30일 이내 갱신계약</span><b id="kpiRenew">-</b></div><i class="ti ti-chevron-right kpi-arrow"></i></div>
+        <div class="kpi clickable" onclick="showDashboardList('ppw')"><div class="kpi-ic"><i class="ti ti-clock"></i></div><div class="kpi-body"><span>PPW 도래계약</span><b id="kpiPPW">-</b></div><i class="ti ti-chevron-right kpi-arrow"></i></div>
+        <div class="kpi clickable" onclick="switchTab('accident')"><div class="kpi-ic"><i class="ti ti-alert-triangle"></i></div><div class="kpi-body"><span>사고계약 데이터</span><b id="kpiAccident">-</b></div><i class="ti ti-chevron-right kpi-arrow"></i></div>
+        <div class="kpi"><div class="kpi-ic"><i class="ti ti-chart-pie"></i></div><div class="kpi-body"><span>최고 Layer 소진율</span><b id="kpiLayer">-</b></div></div>
       </div>
       <div class="panel-grid">
         <div class="panel"><h3>오늘 처리할 업무</h3><div id="todayTasks" class="card-list"></div><div id="dashboardList" class="dashboard-list"></div></div>
@@ -439,6 +484,7 @@
     </section>
 
   </main>
+  </div>
 </div>
 <div id="treatyHoverPopover" class="popover"></div>
 <div id="facModal" class="modal-backdrop" onclick="closeModal(event)"><div class="modal-card" onclick="event.stopPropagation()"><div class="modal-head"><h3>상세</h3><button class="secondary-btn" onclick="closeModal()">닫기</button></div><div id="facModalBody"></div></div></div>
@@ -456,4 +502,5 @@
 <!-- 서버 동기화 + 실제 인증 (가장 마지막에 오버라이드) -->
 <script src="./db-sync.js"></script>
 <script src="./auth-overlay.js"></script>
+<script src="./nav-icons.js"></script>
 </body></html>
