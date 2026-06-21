@@ -1,0 +1,7 @@
+# Caddy 설정. SITE_ADDRESS 환경변수로 동작 모드가 결정된다.
+#  - 도메인(예: gra.example.com)  → Let's Encrypt HTTPS 자동 발급/갱신
+#  - :80                          → 도메인 없이 IP로 HTTP 접속(시연/임시용)
+{$SITE_ADDRESS} {
+	encode gzip
+	reverse_proxy server:3000
+}

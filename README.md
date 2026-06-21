@@ -1,95 +1,87 @@
-# Global Risk Atlas — 해외 재보험 관리시스템
+# 글로벌 리스크 아틀라스 — 프로덕션 빌드 (gra-prod)
 
-해외수재·누적위험·사고계약·재보험 프로그램을 관리하는 웹 시스템입니다.
-기존 브라우저 단독 프로토타입을 **서버 + DB 기반 실제 웹 시스템**으로 전환하고 있습니다.
+gra 최신 프로토타입의 **화면·기능**을 그대로 살리면서, v62에서 검증한
+**서버 + PostgreSQL + 인증 + AI** 아키텍처로 재구성한 버전입니다.
 
-## 아키텍처
+## 구성
 
 ```
-브라우저(client/)  ──fetch──▶  Express API 서버(server/)  ──▶  PostgreSQL (Prisma ORM)
-                                                          ──▶  파일 저장소(uploads/)
-                                                          ──▶  Claude API (요약·번역, 5단계)
+gra-prod/
+├── client/                 # 프론트엔드 (gra 최신 프로토타입 그대로)
+│   ├── app.js              # 원본 유지 (DATA만 서버 주입으로 1줄 교체)
+│   ├── server-state.js     # ★ localStorage 캐시 비움 → 서버가 권위 소스
+│   ├── db-sync.js          # ★ 저장 가로채 /api/sync 로 서버 영속
+│   ├── auth-overlay.js     # ★ 가짜 로그인 → 서버 인증(JWT)+RBAC
+│   ├── ai-integration.js   # AI 호출(서버 /api/ai 경유) — 원본 유지
+│   └── config.js           # useDirect:false, 키 없음(키는 서버에만)
+├── server/                 # 백엔드 (Express + Prisma)
+│   ├── index.js            # 부트스트랩 / 동기화 / 인증 / AI 라우트
+│   ├── prisma/schema.prisma# 14개 모델 (gra의 Intake·Cession 포함)
+│   ├── prisma/seed.js      # gra DATA(seed-data.json) 적재
+│   └── services/{ai,auth}.js
+└── docker-compose.yml      # web + db 한 번에 기동
 ```
 
-- **client/** — 화면(`index.html`, `styles.css`, `app.js`, `assets/`)
-- **server/** — Node.js + Express API, Prisma 스키마, 시드 스크립트
-- **docker-compose.yml** — PostgreSQL + 서버를 한 번에 기동
-
-## 실행 방법 (Docker, 권장)
-
-Docker Desktop만 있으면 한 줄로 기동됩니다.
+## 실행 (Docker)
 
 ```bash
+cp .env.example .env        # ANTHROPIC_API_KEY 등 채우기(키 없어도 기동됨)
 docker compose up -d --build
+# → http://localhost:3000
 ```
 
-- 접속: http://localhost:3000
-- 최초 기동 시 DB 스키마 반영(`prisma db push`) → 기존 데이터 시드 적재가 자동 수행됩니다.
-- 데이터 강제 재적재: `docker compose exec -e SEED_FORCE=1 server node prisma/seed.js`
-- 종료: `docker compose down` (데이터 유지) / `docker compose down -v` (DB 볼륨까지 삭제)
+종료: `docker compose down` (데이터 유지) / `docker compose down -v` (DB 초기화)
 
-## 적재되는 기존 데이터
+## 데모 계정
 
-| 테이블 | 건수 | 비고 |
+| 사번 | 비밀번호 | 역할 |
 |---|---|---|
-| contracts(기간계 수재계약) | 240 | |
-| facInward(임의수재) | 85 | |
-| accidents(사고계약) | 113 | `policyNo` → contracts FK |
-| inwardClaims(해외수재 클레임) | 35 | `inwardRef` → facInward FK |
-| documents / treaties / treatyLayers | 10 / 4 / 15 | |
-| layerStatus / layerClaims / fxRates | 11 / 8 / 5 | |
+| `admin` | `admin1234` | ADMIN (전체 + 사용자관리) |
+| `111` | `demo1234` | GLOBAL (글로벌사업부) |
 
-## 현재 API
+신규 사번은 [사번 등록] → 관리자 승인 후 로그인됩니다.
 
-- `GET /api/health` — 서버·DB 상태
-- `GET /api/summary` — 적재 데이터 건수
-- `GET /api/meta` — 마감일자 등 메타
-- `GET /api/contracts?q=&take=&skip=` — 계약 검색/페이지네이션
-- `GET /api/bootstrap.js` — 전체 데이터셋을 `window.__SERVER_DATA__`로 주입(화면이 app.js보다 먼저 로드)
-- `GET /api/bootstrap` — 동일 데이터의 JSON
-- `POST /api/sync` — 가변 컬렉션(fac/accidents/inwardClaims/docs/layers/meta) 서버 반영
-- `GET /api/ai/status` — AI 활성화 여부(키 설정 시 true)
-- `POST /api/ai/survey-summary` · `doc-summary` · `doc-translate` · `extract-slip` — Claude API. 키 미설정 시 "시연 샘플" 목업으로 자동 폴백
-- `POST /api/auth/register` · `login` · `GET /api/auth/me` — 인증(bcrypt 해시 + JWT)
-- `GET /api/users` · `POST /api/users/:id/approve` · `/role` · `DELETE` — 사용자 관리(ADMIN 전용)
+## 데이터 흐름
 
-화면은 더 이상 인라인 데이터를 쓰지 않고, 페이지 로드 시 `/api/bootstrap.js`로 DB의 데이터를 받아 렌더링합니다(모든 PC에서 동일 데이터). 등록/수정/삭제는 `localStorage.setItem`을 가로채는 단일 훅에서 디바운스(500ms)로 `/api/sync`에 전송되어 DB에 영속됩니다.
+1. 페이지 로드 → `/api/bootstrap.js` 가 DB 전체를 `window.__SERVER_DATA__` 로 주입
+2. `server-state.js` 가 localStorage 캐시를 비워 화면이 **서버 데이터**로 렌더
+3. 등록/수정/삭제 → `db-sync.js` 가 500ms 디바운스로 `/api/sync` 전송 → DB 영속
+4. 다른 PC/새로고침에서도 동일 데이터 표시
 
-## 구축 로드맵
+동기화 대상(가변): `fac · accidents · inwardClaims · docs · layers · meta · intake`
+(cessions/contracts/treaties/layerClaims 는 시드 기준 — 필요 시 후속 확장)
 
-1. ✅ **서버 골격 + DB 스키마 + 시드 + Docker Compose**
-2. ✅ **읽기: 화면을 서버 데이터로 전환**(부트스트랩 주입, 240/113/85/35건 브라우저 검증)
-3. ✅ **쓰기: 등록/수정/삭제를 서버 동기화**(UI 등록→새로고침 후 DB 유지 브라우저 검증)
-4. ✅ **인증·권한(RBAC) + 승인 워크플로**(bcrypt+JWT, 역할별 메뉴, 관리자 승인/역할/삭제)
-5. ✅ **Claude API 연동**(서베이 요약·약관 PDF 요약·번역·Slip 추출). 키 없으면 시연 샘플 목업 폴백
-6. 감사로그 + 계산검증 + 코드 정리 ← 다음
+## AI
 
-### 로그인 / 권한
+- 클라이언트는 항상 서버 `POST /api/ai` 를 호출(브라우저 직접호출 없음)
+- 키는 서버 환경변수 `ANTHROPIC_API_KEY` 에만 존재
+- 키 미설정 시 503 안내(`/api/ai/status` 로 상태 확인)
 
-데모 계정 — 관리자 `admin / admin1234`, 글로벌사업부 `111 / demo1234`. 신규 사용자는 [사번 등록] 후 관리자 승인을 받아야 로그인됩니다. 역할(ADMIN/GLOBAL/UW/CLAIM/USER)별로 보이는 메뉴가 달라지며, 사용자 관리·승인은 ADMIN만 가능합니다. (JWT 비밀키는 `.env`의 `JWT_SECRET`로 운영 시 교체)
-
-### AI 기능 사용 (선택)
-
-기본은 키 없이 "시연 샘플"로 동작합니다. **실제 Claude로 전환**하려면:
-
-```bash
-cp .env.example .env     # 루트에 .env 생성
-# .env 의 ANTHROPIC_API_KEY= 뒤에 실제 키 입력 (sk-ant-...)
-docker compose up -d     # .env를 읽어 서버 재생성
-```
-
-`GET /api/ai/status` 가 `{"enabled":true}` 면 실제 Claude로 동작합니다. 비용 절감 시 `.env`의 `AI_MODEL=claude-haiku-4-5`.
-
-> 참고: 사용자가 임의 증권번호로 사고를 등록하는 프로토타입 동작을 수용하기 위해 사고↔계약, 클레임↔수재계약은 하드 외래키 대신 인덱스 참조로 운영합니다. 정합성 검증은 4~6단계에서 애플리케이션 레벨로 추가합니다.
-
-## 로컬(비-Docker) 실행
-
-PostgreSQL이 설치돼 있다면:
+## 로컬(비-Docker) 개발
 
 ```bash
 cd server
-cp .env.example .env   # DATABASE_URL 수정
+cp .env.example .env        # DATABASE_URL 을 로컬 Postgres(5433)로
 npm install
-npm run setup          # prisma generate + db push + seed
+npm run setup               # prisma generate + db push + seed
 npm run dev
 ```
+
+## AWS 배포 (단일 인스턴스 — 가장 간소)
+
+`docker-compose.prod.yml`(Caddy 자동 HTTPS + server + db)을 인스턴스 한 대에서 실행합니다.
+단계별 절차는 **[DEPLOY.md](DEPLOY.md)** 참고.
+
+```bash
+cp .env.prod.example .env   # 비밀값·SITE_ADDRESS 채우기
+docker compose -f docker-compose.prod.yml up -d --build
+```
+
+| 파일 | 용도 |
+|---|---|
+| `docker-compose.prod.yml` | 프로덕션 스택(Caddy+server+db, 포트 비노출) |
+| `Caddyfile` | 리버스프록시 + 도메인 시 HTTPS 자동 |
+| `.env.prod.example` | 운영 환경변수 템플릿 |
+| `DEPLOY.md` | Lightsail/EC2 배포 가이드 |
+
+규모가 커지면 매니지드로 이전: App Runner(서버) + RDS(Postgres) + Secrets Manager(키).

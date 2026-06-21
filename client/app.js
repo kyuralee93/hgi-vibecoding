@@ -1,15 +1,16 @@
 
-const DATA = window.__SERVER_DATA__ || {meta:{},contracts:[],facInward:[],accidents:[],inwardClaims:[],docs:[],treaties:[],layerStatus:[],fxRates:{},layerClaims:[]};
+(function(){try{var V='gra_demo_consistent_2026_06_19_v7';if(localStorage.getItem('gra_data_version')!==V){Object.keys(localStorage).filter(function(k){return k.indexOf('gra_')===0&&k!=='gra_data_version';}).forEach(function(k){localStorage.removeItem(k);});localStorage.setItem('gra_data_version',V);}}catch(e){}})();
+const DATA = window.__SERVER_DATA__ || {meta:{},contracts:[],facInward:[],accidents:[],inwardClaims:[],docs:[],treaties:[],layerStatus:[],fxRates:{},layerClaims:[],intake:[],cessions:[]};
 const PAGE = 10;
 let state = {
   user: JSON.parse(sessionStorage.getItem('gra_v34_user') || 'null'),
   users: JSON.parse(localStorage.getItem('gra_v34_users') || '[]'),
-  fac: JSON.parse(JSON.stringify(DATA.facInward)),
-  accidents: JSON.parse(JSON.stringify(DATA.accidents)),
-  inwardClaims: JSON.parse(JSON.stringify(DATA.inwardClaims)),
-  docs: JSON.parse(JSON.stringify(DATA.docs)),
-  layers: JSON.parse(JSON.stringify(DATA.layerStatus)),
-  meta: JSON.parse(JSON.stringify(DATA.meta)),
+  fac: JSON.parse(localStorage.getItem('gra_v34_fac') || JSON.stringify(DATA.facInward)),
+  accidents: JSON.parse(localStorage.getItem('gra_v34_accidents') || JSON.stringify(DATA.accidents)),
+  inwardClaims: JSON.parse(localStorage.getItem('gra_v34_inwardClaims') || JSON.stringify(DATA.inwardClaims)),
+  docs: JSON.parse(localStorage.getItem('gra_v34_docs') || JSON.stringify(DATA.docs)),
+  layers: JSON.parse(localStorage.getItem('gra_v34_layers') || JSON.stringify(DATA.layerStatus)),
+  meta: JSON.parse(localStorage.getItem('gra_v34_meta') || JSON.stringify(DATA.meta)),
   pages: {fac:1, ppw:1, acc:1, contract:1, region:1},
   selectedRegion: null
 };
@@ -611,7 +612,7 @@ function renderTreatyCards(){
 }
 
 // Layer별 사고계약 연결 관리
-state.layerClaims = JSON.parse(JSON.stringify(DATA.layerClaims || []));
+state.layerClaims = JSON.parse(localStorage.getItem('gra_v37_layer_claims') || JSON.stringify(DATA.layerClaims || []));
 function saveLayerClaims(){
   localStorage.setItem('gra_v37_layer_claims', JSON.stringify(state.layerClaims || []));
 }
@@ -1127,7 +1128,7 @@ switchTab = function(tab){
 /* ===== v40: 문서등록/파일요약/관리자 업로드/수재번호 Layer 연결 ===== */
 
 // ---------- 상태 확장 ----------
-state.contracts = JSON.parse(JSON.stringify(DATA.contracts || []));
+state.contracts = JSON.parse(localStorage.getItem('gra_v40_contracts') || JSON.stringify(DATA.contracts || []));
 state.pendingDocText = state.pendingDocText || '';
 state.pendingDocFileName = state.pendingDocFileName || '';
 state.copilotFileText = state.copilotFileText || '';
@@ -2638,7 +2639,7 @@ function applyPnl(){
 /* ===== v48: 해외계약 Intake menu + cleaner guidance ===== */
 (function(){
   const INTAKE_KEY = 'gra_v48_intake';
-  state.intake = JSON.parse(localStorage.getItem(INTAKE_KEY) || '[]');
+  state.intake = JSON.parse(localStorage.getItem(INTAKE_KEY) || JSON.stringify(DATA.intake||[]));
   const baseSaveAllV48 = saveAll;
   saveAll = function(){
     baseSaveAllV48();
@@ -2840,10 +2841,10 @@ function applyPnl(){
   };
   window.sendCurrentIntakeToFac = function(){
     const row = currentIntakePayload();
-    if(!row.insured || !row.country){ alert('먼저 Intake 항목을 입력하거나 목록에서 수정할 건을 선택하세요.'); return; }
+    if(!row.insured || !row.country){ alert('먼저 접수 항목을 입력하거나 목록에서 수정할 건을 선택하세요.'); return; }
     setVal('facInsured', row.insured); setVal('facCountry', row.country); setVal('facCity', row.city); setVal('facLine', row.line==='재물'?'Package':row.line==='특종'?'배상책임':row.line==='해상'?'해상적하':row.line); setVal('facTsi', row.tsiEok); setVal('facPremiumOriginal', row.premiumOriginal); setVal('facCurrency', row.currency); setVal('facCedant', row.partner); setVal('facPPW', row.due); setVal('facOwner', currentUser());
     setVal('facSlipSummary', `${row.source} / ${row.partner || '파트너 확인필요'} / 사고이력 ${row.lossHistory}`);
-    setVal('facMemo', [`Intake No: ${row.id}`, row.memo, row.lossDesc ? `사고내용: ${row.lossDesc}` : '', row.lossAmountEok ? `사고금액: ${eok(row.lossAmountEok)}` : ''].filter(Boolean).join('\n'));
+    setVal('facMemo', [`접수번호: ${row.id}`, row.memo, row.lossDesc ? `사고내용: ${row.lossDesc}` : '', row.lossAmountEok ? `사고금액: ${eok(row.lossAmountEok)}` : ''].filter(Boolean).join('\n'));
     switchTab('inward');
   };
   window.sendIntakeToFac = function(id){ editIntake(id); sendCurrentIntakeToFac(); };
@@ -3139,7 +3140,7 @@ function applyPnl(){
   };
 
   function cleanStaticText(){
-    document.querySelector('[data-tab="contract"]') && (document.querySelector('[data-tab="contract"]').textContent='기간계 수재계약 조회');
+    document.querySelector('[data-tab="contract"]') && (document.querySelector('[data-tab="contract"]').textContent='출재·수재계약 조회');
     document.querySelector('[data-tab="accident"]') && (document.querySelector('[data-tab="accident"]').textContent='사고계약 데이터');
     document.querySelector('[data-tab="docs"]') && (document.querySelector('[data-tab="docs"]').textContent='약관·특약 문서관리');
     document.querySelectorAll('[data-tab="closing"],[data-tab="pnl"],[data-tab="copilot"]').forEach(x=>x.remove());
@@ -3450,13 +3451,13 @@ function applyPnl(){
   };
   window.sendCurrentIntakeToFac = function(){
     const row = (typeof currentIntakePayload==='function') ? currentIntakePayload() : null;
-    if(!row || !row.insured || !row.country){ alert('먼저 Intake 항목을 입력하거나 목록에서 수정할 건을 선택하세요.'); return; }
+    if(!row || !row.insured || !row.country){ alert('먼저 접수 항목을 입력하거나 목록에서 수정할 건을 선택하세요.'); return; }
     if(!confirm(`${row.id} 내용을 계약 진행관리 화면으로 전송할까요?`)) return;
     const set=(id,v)=>{const el=q(id); if(el) el.value=v??'';};
     set('facEditRef',''); set('facIntakeNo', row.id); set('facReviewStatus','검토중'); set('facReviewOwner', row.owner||'글로벌사업부'); set('facRequestSource', `${row.source||''} / ${row.partner||''}`);
     set('facInsured', row.insured); set('facCountry', row.country); set('facCity', row.city); set('facLine', row.line==='재물'?'Package':row.line==='특종'?'배상책임':row.line==='해상'?'해상적하':row.line); set('facTsi', row.tsiEok); set('facPremiumOriginal', row.premiumOriginal); set('facCurrency', row.currency); set('facCedant', row.partner); set('facPPW', row.due); set('facOwner', currentUser());
     set('facSlipSummary', `${row.source} / ${row.partner || '파트너 확인필요'} / 사고이력 ${row.lossHistory}`);
-    set('facMemo', [`Intake No: ${row.id}`, row.memo, row.lossDesc ? `사고내용: ${row.lossDesc}` : '', row.lossAmountEok ? `사고금액: ${eok(row.lossAmountEok)}` : ''].filter(Boolean).join('\n'));
+    set('facMemo', [`접수번호: ${row.id}`, row.memo, row.lossDesc ? `사고내용: ${row.lossDesc}` : '', row.lossAmountEok ? `사고금액: ${eok(row.lossAmountEok)}` : ''].filter(Boolean).join('\n'));
     set('facConfirmNote','');
     row.stage='계약관리 전송';
     saveAll(); renderIntakeTable(); switchTab('inward');
@@ -3465,7 +3466,7 @@ function applyPnl(){
   const helpV50 = {
     dashboard:'검토 중 오퍼, 체결 수재계약 PPW, 사고계약 데이터, 재보험 Layer 현황을 확인합니다.',
     intake:'메일 또는 Slip으로 접수된 해외계약 정보를 표준 항목으로 정리합니다. 이 단계는 계약을 확정하는 단계가 아니라 검토를 시작하기 위한 접수 단계입니다.',
-    inward:'Intake 이후 계약 진행상태를 관리합니다. 접수, 검토중, 조건협의, 수재확정, 인수거절, 기간계 입력완료까지의 이력을 축적합니다.',
+    inward:'접수 이후 계약 진행상태를 관리합니다. 접수, 검토중, 조건협의, 수재확정, 인수거절, 기간계 입력완료까지의 이력을 축적합니다.',
     contract:'월마감 후 기간계에서 내려받은 체결 수재계약을 조회합니다. PPW와 미수관리는 체결계약 기준으로 이 화면에서 관리합니다.',
     location:'해외수재계약 기준으로 국가·도시별 누적 가입금액을 확인합니다.',
     inwardClaim:'수재계약에 연결된 클레임을 등록하고 처리 이력을 관리합니다.',
@@ -3490,8 +3491,8 @@ function applyPnl(){
   window.addEventListener('load',()=>{
     setTimeout(()=>{
       migrateFacWorkflow();
-      document.querySelector('[data-tab="inward"]') && (document.querySelector('[data-tab="inward"]').textContent='계약 진행관리');
-      document.querySelector('[data-tab="contract"]') && (document.querySelector('[data-tab="contract"]').textContent='체결 수재계약 조회');
+      document.querySelector('[data-tab="inward"]') && (document.querySelector('[data-tab="inward"]').textContent='수재계약 입력관리');
+      document.querySelector('[data-tab="contract"]') && (document.querySelector('[data-tab="contract"]').textContent='출재·수재계약 조회');
       safe(renderFacTable); safe(renderContractTable); safe(renderPPW); safe(renderDashboard); safe(renderMap);
       updateHelpV50('dashboard'); saveAll();
     },1600);
@@ -3513,13 +3514,13 @@ function applyPnl(){
   }
   window.sendCurrentIntakeToFac = function(){
     const row = readIntakeDom();
-    if(!row.insured || !row.country){ alert('먼저 Intake 항목을 입력하거나 목록에서 수정할 건을 선택하세요.'); return; }
+    if(!row.insured || !row.country){ alert('먼저 접수 항목을 입력하거나 목록에서 수정할 건을 선택하세요.'); return; }
     if(!confirm(`${row.id} 내용을 계약 진행관리 화면으로 전송할까요?`)) return;
     const set=(id,val)=>{const el=q(id); if(el) el.value=val??'';};
     set('facEditRef',''); set('facIntakeNo', row.id); set('facReviewStatus','검토중'); set('facReviewOwner', row.owner||'글로벌사업부'); set('facRequestSource', `${row.source||''}${row.partner?' / '+row.partner:''}`);
     set('facInsured', row.insured); set('facCountry', row.country); set('facCity', row.city); set('facLine', row.line==='재물'?'Package':row.line==='특종'?'배상책임':row.line==='해상'?'해상적하':row.line); set('facTsi', row.tsiEok); set('facPremiumOriginal', row.premiumOriginal); set('facCurrency', row.currency); set('facCedant', row.partner); set('facPPW', row.due); set('facOwner', currentUser());
     set('facSlipSummary', `${row.source||'접수'} / ${row.partner || '파트너 확인필요'} / 사고이력 ${row.lossHistory}`);
-    set('facMemo', [`Intake No: ${row.id}`, row.memo, row.lossDesc ? `사고내용: ${row.lossDesc}` : '', row.lossAmountEok ? `사고금액: ${eok(row.lossAmountEok)}` : ''].filter(Boolean).join('\n'));
+    set('facMemo', [`접수번호: ${row.id}`, row.memo, row.lossDesc ? `사고내용: ${row.lossDesc}` : '', row.lossAmountEok ? `사고금액: ${eok(row.lossAmountEok)}` : ''].filter(Boolean).join('\n'));
     set('facConfirmNote','');
     const item = (state.intake||[]).find(x=>x.id===row.id); if(item){ item.stage='계약관리 전송'; saveAll(); if(typeof renderIntakeTable==='function') renderIntakeTable(); }
     switchTab('inward');
@@ -3527,7 +3528,7 @@ function applyPnl(){
   window.sendIntakeToFac = function(id){ if(typeof editIntake==='function') editIntake(id); setTimeout(()=>sendCurrentIntakeToFac(),80); };
 })();
 
-/* ===== v51: Intake 단계 제거, 상태변경 로그, 팝업 종료, 재보험 시각화 고도화 ===== */
+/* ===== v51: 접수 단계 제거, 상태변경 로그, 팝업 종료, 재보험 시각화 고도화 ===== */
 (function(){
   const q = (id)=>document.getElementById(id);
   const nowText = ()=>new Date().toISOString().slice(0,16).replace('T',' ');
@@ -4463,14 +4464,14 @@ function applyPnl(){
   }
   function ensureInwardUX(){
     const sec = q('inward'); if(!sec) return;
-    // 오래된 Slip/Email 패널은 Intake 메뉴로 기능을 분리했으므로 화면에서 제거
+    // 오래된 Slip/Email 패널은 접수 메뉴로 기능을 분리했으므로 화면에서 제거
     const firstPanel = sec.querySelector('.panel');
     if(firstPanel && firstPanel.textContent.includes('수재 오퍼 Slip')) firstPanel.style.display = 'none';
     // 계약 진행관리 검색 바 정리
     const panel = sec.querySelector('#facTable')?.closest('.panel');
     if(panel && !panel.classList.contains('fac-progress-panel')){
       panel.classList.add('fac-progress-panel');
-      const h = panel.querySelector('h3'); if(h) h.textContent = '계약 진행관리';
+      const h = panel.querySelector('h3'); if(h) h.textContent = '수재계약 입력관리';
       const toolbar = panel.querySelector('.toolbar-row');
       if(toolbar){
         toolbar.classList.add('fac-toolbar-modern');
@@ -4478,10 +4479,6 @@ function applyPnl(){
         if(sel){ sel.innerHTML = '<option>전체</option><option>접수</option><option>검토중</option><option>UW 검토요청</option><option>조건협의</option><option>수재확정</option><option>인수거절</option><option>기간계 입력완료</option>'; }
       }
       const table = q('facTable'); if(table) table.classList.add('fac-table-modern');
-      const ppwMini = document.createElement('div');
-      ppwMini.id = 'facPPWMini';
-      ppwMini.className = 'fac-ppw-card';
-      panel.insertBefore(ppwMini, panel.querySelector('.table-scroll'));
     }
     // 계약 등록 제목 정리
     const regPanel = Array.from(sec.querySelectorAll('.panel')).find(p=>p.textContent.includes('임의수재 계약 등록'));
@@ -4490,7 +4487,7 @@ function applyPnl(){
   function ensureIntakeUX(){
     const raw = q('rawIntakeText'); if(raw){
       raw.rows = 6;
-      raw.placeholder = '메일 본문 또는 Slip 주요 조건을 붙여넣으세요. 필요한 경우 우측 표준 Intake 항목을 직접 수정합니다.';
+      raw.placeholder = '메일 본문 또는 Slip 주요 조건을 붙여넣으세요. 필요한 경우 우측 표준 접수 항목을 직접 수정합니다.';
       const panel = raw.closest('.panel');
       if(panel){
         panel.classList.add('raw-input-compact','intake-source-panel');
@@ -4645,7 +4642,7 @@ function updateSelectedClaimSummary(acc){
   const grossView = document.getElementById('icGrossView');
   if(!box) return;
   if(!acc){
-    box.innerHTML = '기간계 사고계약을 선택하면 증권번호 기준으로 수재계약 정보와 사고금액이 표시됩니다.';
+    box.innerHTML = '기간계 체결 수재계약을 선택하면 증권번호 기준으로 수재계약 정보와 사고금액이 표시됩니다.';
     if(policyView) policyView.innerText = '-';
     if(insuredView) insuredView.innerText = '-';
     if(claimView) claimView.innerText = '-';
@@ -6693,229 +6690,540 @@ window.addEventListener('load', () => setTimeout(() => { renderClaimAccidentSear
   },2100));
 })();
 
-/* ===== 서버 동기화 (3단계) =====
-   localStorage 저장을 단일 지점에서 가로채 가변 컬렉션을 서버(/api/sync)로
-   디바운스 전송한다. saveAll이 여러 번 래핑돼 있어 실행 순서에 의존하지 않도록
-   setItem 레벨에서 처리한다. */
+/* ===== v60: PPW 축소(도래 알림) + 대시보드 KPI 차별화(수재확정·기간계 미입력) ===== */
 (function(){
-  if(window.__GRA_SYNC_HOOKED__) return; window.__GRA_SYNC_HOOKED__=true;
-  var WATCH={'gra_v34_fac':1,'gra_v34_accidents':1,'gra_v34_inwardClaims':1,'gra_v34_docs':1,'gra_v34_layers':1,'gra_v34_meta':1};
-  var origSet=localStorage.setItem.bind(localStorage);
-  var timer=null;
-  localStorage.setItem=function(k,v){ origSet(k,v); if(WATCH[k]) schedule(); };
-  function schedule(){ if(timer) clearTimeout(timer); timer=setTimeout(push,500); }
-  function push(){
-    timer=null;
+  const q=(id)=>document.getElementById(id);
+  const esc=(s)=>String(s ?? '').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  const DAY=86400000;
+  function diff(d){ if(!d) return 9999; try{ const base=new Date((state.meta?.asOfDate||new Date().toISOString().slice(0,10))+'T00:00:00'); const t=new Date(String(d).slice(0,10)+'T00:00:00'); return Math.ceil((t-base)/DAY);}catch(e){return 9999;} }
+  function pendingRows(){ return (state.fac||[]).filter(f=>f.reviewStatus==='수재확정'); }
+  function confirmedAt(f){ const h=(f.statusHistory||[]).find(x=>x.status==='수재확정'); return h?h.at:(f.updatedAt||'-'); }
+  function ppwSource(){ return (typeof window.officialPPWRows==='function')?window.officialPPWRows():[]; }
+
+  // (A) 대시보드 2번째 KPI: PPW → 수재확정·기간계 미입력 (이 플랫폼만의 white space 지표)
+  window.showPendingInputList=function(){
+    const rows=pendingRows();
+    let html='<h3>수재확정 · 기간계 미입력 대기</h3><p class="muted">수재확정됐으나 아직 기간계에 입력되지 않은 계약입니다. 기간계가 알 수 없는 구간으로, 입력이 누락되면 공식 데이터에서 빠집니다.</p><div class="table-scroll"><table><thead><tr><th>관리번호</th><th>피보험자</th><th>국가/도시</th><th>종목</th><th>수재확정일</th><th>담당</th></tr></thead><tbody>';
+    html+=(rows.map(f=>`<tr><td>${esc(f.inwardRef)}</td><td>${esc(f.insured)}</td><td>${esc(f.country)}/${esc(f.city)}</td><td>${esc(f.line)}</td><td>${esc(confirmedAt(f))}</td><td>${esc(f.reviewOwner||f.owner||'-')}</td></tr>`).join('')||'<tr><td colspan="6">수재확정 후 기간계 미입력 건이 없습니다.</td></tr>');
+    html+='</tbody></table></div>';
+    const box=q('dashboardList'); if(box) box.innerHTML=html;
+  };
+  const prevDash=window.renderDashboard;
+  window.renderDashboard=function(){
+    try{ if(typeof prevDash==='function') prevDash(); }catch(e){console.warn(e);}
     try{
-      var payload={
-        fac: state.fac||[], accidents: state.accidents||[], inwardClaims: state.inwardClaims||[],
-        docs: state.docs||[], layers: state.layers||[], meta: state.meta||{}
-      };
-      fetch('/api/sync',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
-        .then(function(r){ return r.json(); })
-        .then(function(res){ if(res&&res.error) console.warn('[sync]',res.error); })
-        .catch(function(e){ console.warn('[sync] 네트워크 실패',e); });
-    }catch(e){ console.warn('[sync] 예외',e); }
+      const pending=pendingRows().length;
+      const labels=document.querySelectorAll('#dashboard .kpi span');
+      const ems=document.querySelectorAll('#dashboard .kpi em');
+      const kpis=document.querySelectorAll('#dashboard .kpi');
+      if(labels[1]) labels[1].innerText='수재확정·기간계 미입력';
+      if(q('kpiPPW')) q('kpiPPW').innerText=pending+'건';
+      if(ems[1]) ems[1].innerHTML='<span class="data-badge">기간계 입력 전 white space</span>';
+      if(kpis[1]) kpis[1].onclick=()=>showPendingInputList();
+      const task=q('todayTasks');
+      if(task){
+        const active=(state.fac||[]).filter(f=>!['수재확정','인수거절','기간계 입력완료'].includes(f.reviewStatus)).length;
+        const acc=state.accidents?state.accidents.length:0;
+        task.innerHTML=`<div class="card-item" onclick="switchTab('inward')"><b>계약 진행관리</b><br>검토 중 오퍼 ${active}건</div><div class="card-item" onclick="showPendingInputList()"><b>수재확정·기간계 미입력</b><br>입력 대기 ${pending}건</div><div class="card-item" onclick="switchTab('accident')"><b>사고계약 데이터</b><br>재보험 Layer 영향분석 ${acc}건</div>`;
+      }
+    }catch(e){console.warn('[v60 dash]',e);}
+  };
+
+  // (B) PPW 화면: 미수 관리 → "PPW 도래 알림(놓치면 담보 해지)" 으로 축소
+  function riskBadge(d){
+    if(d<=3) return '<span style="background:#fee2e2;color:#b91c1c;padding:2px 8px;border-radius:10px;font-weight:700;font-size:12px">담보 해지 임박 D-'+d+'</span>';
+    if(d<=7) return '<span style="background:#fef3c7;color:#b45309;padding:2px 8px;border-radius:10px;font-weight:600;font-size:12px">도래 임박 D-'+d+'</span>';
+    return '<span style="background:#e0e7ff;color:#3730a3;padding:2px 8px;border-radius:10px;font-size:12px">확인 필요</span>';
   }
-  window.__graForceSync=push;
+  window.renderPPW=function(){
+    const tbody=document.querySelector('#ppwTable tbody'); if(!tbody) return;
+    const panel=document.querySelector('#ppwTable')?.closest('.panel');
+    if(panel){
+      const h=panel.querySelector('h3'); if(h) h.innerHTML='PPW 도래 알림 <span class="data-badge">기간계 체결 수재계약 · 7일 이내</span>';
+      let cap=panel.querySelector('.ppw-caption'); if(!cap){cap=document.createElement('div');cap.className='ppw-caption muted';cap.style.marginBottom='8px';if(h)h.insertAdjacentElement('afterend',cap);}
+      cap.innerHTML='PPW(보험료납입 워런티) 마감일을 놓치면 담보가 해지됩니다. 해외 출재사·통화·시차가 섞인 환경에서 마감일을 놓치지 않도록 <b>알림만</b> 제공합니다. 보험료 수금·정산·미수 회계는 기간계/회계 시스템 본업입니다.';
+      const sel=q('ppwStatusFilter'); if(sel) sel.style.display='none';
+    }
+    const qstr=(q('ppwSearch')?.value||'').toLowerCase();
+    const rows=ppwSource().filter(c=>!qstr||JSON.stringify(c).toLowerCase().includes(qstr)).sort((a,b)=>diff(a.ppwDate)-diff(b.ppwDate));
+    const PAGE_SIZE=(typeof PAGE!=='undefined'?PAGE:10);
+    const total=Math.max(1,Math.ceil(rows.length/PAGE_SIZE));
+    state.pages=state.pages||{}; state.pages.ppw=Math.min(state.pages.ppw||1,total);
+    const page=rows.slice((state.pages.ppw-1)*PAGE_SIZE,state.pages.ppw*PAGE_SIZE);
+    const head=document.querySelector('#ppwTable thead tr');
+    if(head) head.innerHTML='<th>증권번호</th><th>피보험자</th><th>국가/도시</th><th>보험종목</th><th>PPW 마감일</th><th>D-Day</th><th>위험도</th>';
+    tbody.innerHTML=page.map(c=>{const d=diff(c.ppwDate);return `<tr><td>${esc(c.policyNo)}</td><td>${esc(c.insured)}</td><td>${esc(c.country)}/${esc(c.city)}</td><td>${esc(c.line)}</td><td>${esc(c.ppwDate)}</td><td>D-${d}</td><td>${riskBadge(d)}</td></tr>`;}).join('')||'<tr><td colspan="7">7일 이내 PPW 도래 건이 없습니다.</td></tr>';
+    if(q('ppwPage')) q('ppwPage').innerText=`${state.pages.ppw} / ${total}`;
+    if(typeof window.renderFacPPWMini==='function') window.renderFacPPWMini();
+  };
+
+  // 진행관리 화면 내 PPW 미니카드도 '도래 알림'으로 정리(미수 컬럼 제거)
+  window.renderFacPPWMini=function(){
+    const box=q('facPPWMini'); if(!box) return;
+    const rows=ppwSource().slice(0,6);
+    box.innerHTML=`<h4>PPW 도래 알림</h4><div class="mini-msg">조회 기준일로부터 7일 이내 PPW 마감 건만 표시합니다(놓치면 담보 해지). 기준: 기간계 체결 수재계약</div><table class="fac-ppw-mini-table"><thead><tr><th>증권번호</th><th>피보험자</th><th>PPW 마감일</th><th>D-Day</th><th>위험도</th></tr></thead><tbody>${rows.length?rows.map(c=>{const d=diff(c.ppwDate);return `<tr><td>${esc(c.policyNo)}</td><td>${esc(c.insured)}</td><td>${esc(c.ppwDate)}</td><td>D-${d}</td><td>${riskBadge(d)}</td></tr>`;}).join(''):'<tr><td colspan="5">7일 이내 PPW 도래 건이 없습니다.</td></tr>'}</tbody></table>`;
+  };
+
+  // 대시보드 목록 팝업의 'ppw'도 도래 알림 표현으로
+  const prevList=window.showDashboardList;
+  window.showDashboardList=function(kind){
+    if(kind!=='ppw'){ if(typeof prevList==='function') return prevList(kind); return; }
+    const rows=ppwSource().sort((a,b)=>diff(a.ppwDate)-diff(b.ppwDate));
+    let html='<h3>PPW 도래 알림 (7일 이내)</h3><p class="muted">PPW 마감일 미준수 시 담보가 해지됩니다.</p><div class="table-scroll"><table><thead><tr><th>증권번호</th><th>피보험자</th><th>보험종목</th><th>PPW 마감일</th><th>D-Day</th><th>위험도</th></tr></thead><tbody>';
+    html+=rows.slice(0,30).map(c=>{const d=diff(c.ppwDate);return `<tr><td>${esc(c.policyNo)}</td><td>${esc(c.insured)}</td><td>${esc(c.line)}</td><td>${esc(c.ppwDate)}</td><td>D-${d}</td><td>${riskBadge(d)}</td></tr>`;}).join('')||'<tr><td colspan="6">해당 건이 없습니다.</td></tr>';
+    html+='</tbody></table></div>';
+    const box=q('dashboardList'); if(box) box.innerHTML=html;
+  };
+
+  window.addEventListener('load',()=>setTimeout(()=>{ try{ window.renderDashboard(); window.renderPPW(); }catch(e){console.warn('[v60]',e);} },4000));
 })();
 
-/* ===== 5단계: AI 기능을 실제 Claude API 호출로 교체 =====
-   서버 /api/ai/* 엔드포인트를 호출한다. 기존 정적 템플릿 함수를 EOF에서 오버라이드해
-   onclick 핸들러가 이 버전을 사용하도록 한다. */
+/* ===== v62: 소재지 누적위험 — 체결계약(120) 기준 정합 + 전체 소재지 표시 ===== */
 (function(){
-  function esc(s){ return String(s==null?'':s).replace(/[&<>]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c];}); }
-  function fmtAi(t){ return esc(t).replace(/\n/g,'<br>'); }
-  async function postAi(url, body){
-    const r = await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body||{})});
-    const data = await r.json().catch(function(){return {};});
-    if(!r.ok) throw new Error(data.message || data.error || ('요청 실패('+r.status+')'));
-    return data;
+  const q=(id)=>document.getElementById(id);
+  function officialContracts(){ return (state.contracts && state.contracts.length ? state.contracts : (DATA.contracts||[])); }
+  // 누적위험은 '기간계 체결 해외수재계약' 기준 → 체결수재계약조회(120건)와 일치
+  window.allRiskContracts = function(){ return officialContracts().map(c=>({...c, sourceBucket:'official'})); };
+
+  const prevRenderMap = window.renderMap;
+  window.renderMap = function(){
+    try{ if(typeof prevRenderMap==='function') prevRenderMap(); }catch(e){ console.warn('[v62 base]',e); }
+    try{
+      const regs = (typeof regionAgg==='function') ? regionAgg() : [];
+      const cards = q('regionCards'); if(!cards) return;
+      const totalCnt = regs.reduce((s,r)=>s+r.cnt,0);
+      const totalTsi = regs.reduce((s,r)=>s+r.tsi,0);
+      const fmt=(v)=> (typeof eok==='function'?eok(v):v+'억원');
+      const summary = `<div class="region-card" style="background:#0f172a;color:#fff;cursor:default">
+        <b>전체 누적위험 요약</b><br>소재지 ${regs.length}곳 · 계약 합계 ${totalCnt}건 · 누적 가입금액 ${fmt(totalTsi)}
+        <br><small>기준: 기간계 체결 해외수재계약 (출재·수재계약 조회의 수재계약과 동일 모집단)</small></div>`;
+      // 상위 12개 제한 제거 → 전체 소재지 카드 표시 (한국 포함 모든 소재지)
+      cards.innerHTML = summary + regs.map(r=>`<div class="region-card" onclick="selectRegion('${r.country}','${r.city}')"><b>${r.country} / ${r.city}</b><br>누적 가입금액 ${fmt(r.tsi)} · 계약 ${r.cnt}건</div>`).join('');
+    }catch(e){ console.warn('[v62 cards]',e); }
+  };
+  const prevSwitch = window.switchTab;
+  window.switchTab = function(tab){
+    if(typeof prevSwitch==='function') prevSwitch(tab);
+    if(tab==='location') setTimeout(()=>{ try{ window.renderMap(); }catch(e){} }, 90);
+  };
+  window.addEventListener('load',()=>setTimeout(()=>{ try{ if(q('location')?.classList.contains('active')) window.renderMap(); }catch(e){} }, 4200));
+})();
+
+/* ===== v63: 대시보드 KPI 라벨 정합 + 목록 팝업(모달)화 — UX 정리 ===== */
+(function(){
+  const q=(id)=>document.getElementById(id);
+  const esc=(s)=>String(s ?? '').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  const DAY=86400000;
+  function diff(d){ if(!d) return 9999; try{ const base=new Date((state.meta?.asOfDate||new Date().toISOString().slice(0,10))+'T00:00:00'); const t=new Date(String(d).slice(0,10)+'T00:00:00'); return Math.ceil((t-base)/DAY);}catch(e){return 9999;} }
+  function riskBadge(d){
+    if(d<=3) return '<span style="background:#fee2e2;color:#b91c1c;padding:2px 8px;border-radius:10px;font-weight:700;font-size:12px">담보 해지 임박 D-'+d+'</span>';
+    if(d<=7) return '<span style="background:#fef3c7;color:#b45309;padding:2px 8px;border-radius:10px;font-weight:600;font-size:12px">도래 임박 D-'+d+'</span>';
+    return '<span style="background:#e0e7ff;color:#3730a3;padding:2px 8px;border-radius:10px;font-size:12px">확인 필요</span>';
   }
-  function getDocById(id){ return (state.docs||[]).find(function(d){return String(d.docId)===String(id);}); }
-  function badge(mock){ return '<span class="data-badge">'+(mock?'시연 샘플':'Claude')+'</span>'; }
 
-  // 1) 서베이리포트 AI 요약
-  window.summarizeSurvey = async function(){
-    var c = (state.inwardClaims||[]).find(function(x){return x.claimNo===state.selectedIC;});
-    if(!c) return alert('먼저 클레임 Queue에서 클레임을 선택하거나 저장하세요.');
-    var box = document.getElementById('surveySummary');
-    var file = (document.getElementById('surveyFile')||{}).files;
-    file = file && file[0];
-    if(box) box.innerHTML = '<b>AI 서베이리포트 요약</b><br><span class="muted">Claude API로 분석 중입니다…</span>';
-    try{
-      var reportText = '';
-      if(file && typeof extractFileText==='function'){
-        var ex = await extractFileText(file);
-        reportText = (ex && ex.text) || '';
-      }
-      var ctx = { 사고번호:c.claimNo, 증권번호:c.policyNo||c.inwardRef||'', 피보험자:c.insured, 사고유형:c.cause||'', PaidOS:(c.paidLossEok||0)+'/'+(c.outstandingLossEok||0)+'억원' };
-      var res = await postAi('/api/ai/survey-summary',{ reportText: reportText, context: ctx });
-      if(box) box.innerHTML = '<b>AI 서베이리포트 요약</b> '+badge(res.mock)+'<br>대상: '+esc(c.claimNo)+' / '+esc(c.insured)+'<br><br>'+fmtAi(res.text);
-      var idx = state.inwardClaims.findIndex(function(x){return x.claimNo===c.claimNo;});
-      if(idx>=0){ state.inwardClaims[idx].surveyStatus='요약완료'; state.inwardClaims[idx].surveySummary=(box?box.innerText:''); saveAll(); if(typeof renderInwardClaims==='function') renderInwardClaims(); }
-    }catch(e){ if(box) box.innerHTML = '<span class="required-warn">AI 요약 실패: '+esc(e.message)+'</span>'; }
+  // KPI 라벨/배지를 '값 요소가 속한 카드' 기준으로 정확히 세팅 (인덱싱 어긋남 방지)
+  function setKpi(valueId, label, badge){
+    const v=q(valueId); if(!v) return; const card=v.closest('.kpi'); if(!card) return;
+    const lbl=[...card.querySelectorAll('span')].find(s=>!s.closest('em') && s.id!==valueId && !s.classList.contains('data-badge'));
+    if(lbl) lbl.innerText=label;
+    const em=card.querySelector('em'); if(em) em.innerHTML='<span class="data-badge">'+badge+'</span>';
+  }
+
+  // 공통 모달
+  function ensureModal(){
+    let m=q('graListModal');
+    if(!m){
+      m=document.createElement('div'); m.id='graListModal';
+      m.style.cssText='position:fixed;inset:0;background:rgba(15,23,42,.55);display:none;align-items:center;justify-content:center;z-index:99999;padding:24px';
+      m.innerHTML='<div style="background:#fff;border-radius:14px;max-width:820px;width:100%;max-height:82vh;overflow:auto;padding:22px 24px;box-shadow:0 20px 60px rgba(0,0,0,.3)"><div id="graListBody"></div><div style="text-align:right;margin-top:14px"><button id="graListClose" style="padding:8px 18px;border:none;border-radius:8px;background:#0f172a;color:#fff;cursor:pointer">닫기</button></div></div>';
+      document.body.appendChild(m);
+      m.addEventListener('click',e=>{ if(e.target===m) m.style.display='none'; });
+      q('graListClose').addEventListener('click',()=>{ m.style.display='none'; });
+    }
+    return m;
+  }
+  function openModal(title, subtitle, headers, rowsHtml){
+    const m=ensureModal();
+    q('graListBody').innerHTML =
+      '<h3 style="margin:0 0 6px;font-size:18px">'+title+'</h3>'+
+      (subtitle?'<p style="color:#64748b;font-size:13px;margin:0 0 12px">'+subtitle+'</p>':'')+
+      '<div style="overflow:auto"><table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr style="background:#f1f5f9;text-align:left">'+
+      headers.map(h=>'<th style="padding:8px;white-space:nowrap">'+h+'</th>').join('')+
+      '</tr></thead><tbody>'+rowsHtml+'</tbody></table></div>';
+    m.style.display='flex';
+    const dl=q('dashboardList'); if(dl) dl.innerHTML=''; // 인라인 잔존목록 제거(깨짐 방지)
+  }
+  function td(v){ return '<td style="padding:8px;border-bottom:1px solid #e2e8f0">'+v+'</td>'; }
+  function tr(cells){ return '<tr>'+cells.map(td).join('')+'</tr>'; }
+
+  window.showPendingInputList=function(){
+    const rows=(state.fac||[]).filter(f=>f.reviewStatus==='수재확정');
+    const conf=f=>{const h=(f.statusHistory||[]).find(x=>x.status==='수재확정');return h?h.at:(f.updatedAt||'-');};
+    const body=rows.map(f=>tr([esc(f.inwardRef),esc(f.insured),esc(f.country)+'/'+esc(f.city),esc(f.line),esc(conf(f)),esc(f.reviewOwner||f.owner||'-')])).join('')
+      || '<tr><td colspan="6" style="padding:12px;color:#64748b">수재확정 후 기간계 미입력 건이 없습니다.</td></tr>';
+    openModal('수재확정 · 기간계 미입력 대기 ('+rows.length+'건)',
+      '수재확정됐으나 아직 기간계에 입력되지 않은 계약입니다. 기간계가 알 수 없는 구간으로, 입력이 누락되면 공식 데이터에서 빠집니다.',
+      ['관리번호','피보험자','국가/도시','종목','수재확정일','담당'], body);
   };
 
-  // 2) 문서 요약 (내장 약관은 서버가 PDF를 직접 읽어 처리)
-  window.summarizeSelectedDoc = async function(){
-    var sel = document.getElementById('docAiSelect'); var d = getDocById(sel && sel.value) || (state.docs||[])[0];
-    if(!d) return alert('문서를 선택하세요.');
-    var box = document.getElementById('docAiResult');
-    if(box) box.innerHTML = '<span class="muted">Claude API로 문서를 요약 중입니다…</span>';
-    try{
-      var res = await postAi('/api/ai/doc-summary',{ title:d.title, text:d.text||'', file:d.file||'', keywords:d.keywords||'' });
-      if(box) box.innerHTML = '<b>'+esc(d.title)+' 요약</b> '+badge(res.mock)+'<br><br>'+fmtAi(res.text);
-    }catch(e){ if(box) box.innerHTML = '<span class="required-warn">요약 실패: '+esc(e.message)+'</span>'; }
+  window.showDashboardList=function(kind){
+    if(kind==='renew'){
+      const rows=(typeof renewRows==='function'?renewRows():[]);
+      const body=rows.slice(0,50).map(r=>tr([esc(r.policyNo),esc(r.insured),esc(r.line),esc(r.renewalDate),'D-'+diff(r.renewalDate)])).join('')
+        || '<tr><td colspan="5" style="padding:12px;color:#64748b">해당 건이 없습니다.</td></tr>';
+      openModal('30일 이내 갱신계약 ('+rows.length+'건)','기간계 체결 수재계약 기준 만기 30일 이내',
+        ['증권번호','피보험자','보험종목','만기일','D-Day'], body);
+      return;
+    }
+    // ppw
+    const rows=(typeof window.officialPPWRows==='function'?window.officialPPWRows():[]).slice().sort((a,b)=>diff(a.ppwDate)-diff(b.ppwDate));
+    const body=rows.slice(0,50).map(c=>{const d=diff(c.ppwDate);return tr([esc(c.policyNo),esc(c.insured),esc(c.line),esc(c.ppwDate),'D-'+d,riskBadge(d)]);}).join('')
+      || '<tr><td colspan="6" style="padding:12px;color:#64748b">7일 이내 PPW 도래 건이 없습니다.</td></tr>';
+    openModal('PPW 도래 알림 (7일 이내)','PPW 마감일 미준수 시 담보가 해지됩니다.',
+      ['증권번호','피보험자','보험종목','PPW 마감일','D-Day','위험도'], body);
   };
 
-  // 3) 문서 번역
-  window.translateSelectedDoc = async function(){
-    var sel = document.getElementById('docAiSelect'); var d = getDocById(sel && sel.value) || (state.docs||[])[0];
-    if(!d) return alert('문서를 선택하세요.');
-    var target = (document.getElementById('docTranslateLang')||{}).value || 'ko';
-    var box = document.getElementById('docAiResult');
-    if(box) box.innerHTML = '<span class="muted">Claude API로 번역 중입니다…</span>';
+  const prevDash=window.renderDashboard;
+  window.renderDashboard=function(){
+    try{ if(typeof prevDash==='function') prevDash(); }catch(e){console.warn(e);}
     try{
-      var res = await postAi('/api/ai/doc-translate',{ title:d.title, text:d.text||'', file:d.file||'', target:target });
-      if(box) box.innerHTML = '<b>'+esc(d.title)+' 번역('+(target==='en'?'EN':'KO')+')</b> '+badge(res.mock)+'<br><br>'+fmtAi(res.text);
-    }catch(e){ if(box) box.innerHTML = '<span class="required-warn">번역 실패: '+esc(e.message)+'</span>'; }
+      const pending=(state.fac||[]).filter(f=>f.reviewStatus==='수재확정').length;
+      setKpi('kpiRenew','30일 이내 갱신계약','기간계 수재계약');
+      setKpi('kpiPPW','수재확정·기간계 미입력','기간계 입력 전 white space');
+      setKpi('kpiAccident','사고계약 데이터','기간계 사고계약');
+      setKpi('kpiLayer','최고 Layer 소진율','사고계약 기반 Layer 관리');
+      if(q('kpiPPW')) q('kpiPPW').innerText=pending+'건';
+      const card=q('kpiPPW')?.closest('.kpi'); if(card) card.onclick=()=>showPendingInputList();
+      const dl=q('dashboardList'); if(dl) dl.innerHTML=''; // 대시보드 본문 인라인 목록 제거 → 모달로만
+    }catch(e){console.warn('[v63]',e);}
   };
 
-  // 4) Slip·이메일 AI 자동추출 (structured outputs)
-  window.analyzeSlipOffer = async function(){
-    var pasted = ((document.getElementById('slipEmailText')||{}).value || '').trim();
-    var combined = [state.slipOfferText||'', pasted].filter(Boolean).join('\n\n');
-    var box = document.getElementById('slipExtractResult');
-    if(!combined){ if(box) box.innerHTML = '<span class="required-warn">Slip 파일을 업로드하거나 이메일 본문을 붙여넣으세요.</span>'; return; }
-    if(box) box.innerHTML = '<span class="muted">Claude API로 핵심 조건을 추출 중입니다…</span>';
+  window.addEventListener('load',()=>setTimeout(()=>{ try{ window.renderDashboard(); }catch(e){} },4400));
+})();
+
+/* ===== v64: 소재지 누적위험 화면 UX 재구성 (지도 확대 + 지역현황 컴팩트 표) ===== */
+(function(){
+  const q=(id)=>document.getElementById(id);
+  const esc=(s)=>String(s ?? '').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  const fmt=(v)=> (typeof eok==='function'?eok(v):v+'억원');
+  let sortKey='tsi';
+
+  function resizeMap(){
+    const map=q('leafletMap');
+    if(map){ map.style.height='clamp(420px, 60vh, 620px)'; map.style.minHeight='420px';
+      if(typeof leafletMapV36!=='undefined' && leafletMapV36){ setTimeout(()=>{ try{ leafletMapV36.invalidateSize(); }catch(e){} },140); } }
+  }
+  function renderRegionTable(){
+    const cards=q('regionCards'); if(!cards) return;
+    const regs=(typeof regionAgg==='function')?regionAgg().slice():[];
+    regs.sort((a,b)=> sortKey==='cnt' ? b.cnt-a.cnt
+                    : sortKey==='name'? (a.country+a.city).localeCompare(b.country+b.city,'ko')
+                    : b.tsi-a.tsi);
+    const totalCnt=regs.reduce((s,r)=>s+r.cnt,0), totalTsi=regs.reduce((s,r)=>s+r.tsi,0);
+    const maxTsi=Math.max(1,...regs.map(r=>r.tsi));
+    const arrow=k=>sortKey===k?' ▾':'';
+    const sel=state.selectedRegion||{};
+    let html=`<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap">
+        <div style="font-size:13px;color:#334155"><b>소재지 ${regs.length}곳</b> · 계약 ${totalCnt}건 · 누적 ${fmt(totalTsi)}</div>
+        <div style="font-size:12px;color:#64748b">정렬
+          <a href="javascript:void(0)" onclick="__regionSort('tsi')" style="text-decoration:none;color:${sortKey==='tsi'?'#4f46e5':'#64748b'}">금액${arrow('tsi')}</a> ·
+          <a href="javascript:void(0)" onclick="__regionSort('cnt')" style="text-decoration:none;color:${sortKey==='cnt'?'#4f46e5':'#64748b'}">건수${arrow('cnt')}</a> ·
+          <a href="javascript:void(0)" onclick="__regionSort('name')" style="text-decoration:none;color:${sortKey==='name'?'#4f46e5':'#64748b'}">지역명${arrow('name')}</a>
+        </div></div>`;
+    html+='<div style="max-height:clamp(360px,52vh,560px);overflow:auto;border:1px solid #e2e8f0;border-radius:10px">'
+        +'<table style="width:100%;border-collapse:collapse;font-size:13px">'
+        +'<thead><tr style="position:sticky;top:0;background:#f8fafc;z-index:1;text-align:left">'
+        +'<th style="padding:8px 10px">소재지</th><th style="padding:8px 10px;text-align:right">누적 가입금액</th><th style="padding:8px 10px;text-align:right">계약</th></tr></thead><tbody>';
+    html+=regs.map(r=>{
+      const w=Math.round(r.tsi/maxTsi*100);
+      const active=(sel.country===r.country && sel.city===r.city);
+      return `<tr style="border-top:1px solid #eef2f7;cursor:pointer;background:${active?'#eef2ff':''}" onclick="selectRegion('${esc(r.country)}','${esc(r.city)}')" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='${active?'#eef2ff':''}'">
+        <td style="padding:7px 10px"><b>${esc(r.country)}</b> / ${esc(r.city)}</td>
+        <td style="padding:7px 10px;text-align:right"><div style="display:flex;align-items:center;gap:6px;justify-content:flex-end">
+          <span style="display:inline-block;height:6px;width:${w}%;max-width:80px;background:#6366f1;border-radius:3px;opacity:.55"></span>
+          <span style="white-space:nowrap">${fmt(r.tsi)}</span></div></td>
+        <td style="padding:7px 10px;text-align:right;white-space:nowrap">${r.cnt}건</td></tr>`;
+    }).join('') || '<tr><td colspan="3" style="padding:12px;color:#64748b">표시할 계약이 없습니다.</td></tr>';
+    html+='</tbody></table></div>';
+    cards.innerHTML=html;
+  }
+  window.__regionSort=function(k){ sortKey=k; renderRegionTable(); };
+
+  const prev=window.renderMap;
+  window.renderMap=function(){
+    try{ if(typeof prev==='function') prev(); }catch(e){console.warn('[v64 base]',e);}
+    try{ resizeMap(); renderRegionTable(); }catch(e){console.warn('[v64]',e);}
+  };
+  const prevSwitch=window.switchTab;
+  window.switchTab=function(tab){ if(typeof prevSwitch==='function') prevSwitch(tab); if(tab==='location') setTimeout(()=>{ try{ window.renderMap(); }catch(e){} },110); };
+  window.addEventListener('load',()=>setTimeout(()=>{ try{ if(q('location')?.classList.contains('active')) window.renderMap(); }catch(e){} },4600));
+})();
+
+/* ===== v65: 해외수재 클레임 화면 문구 정정 (사고계약 → 체결 수재계약) ===== */
+(function(){
+  // 클레임 화면 한정 문구 교정 (Layer 소진 관리의 '기간계 사고계약'은 그대로 둠)
+  const REPL=[
+    ['기간계 사고계약 데이터를 기준으로','기간계 체결 수재계약을 기준으로'],
+    ['기간계 사고계약 데이터','기간계 체결 수재계약'],
+    ['기간계 사고계약을 선택','기간계 체결 수재계약을 선택'],
+    ['기간계 사고계약 선택','기간계 체결 수재계약 선택'],
+    ['기간계 사고계약','기간계 체결 수재계약'],
+    ['선택 계약·사고 요약','선택 수재계약 요약'],
+    ['선택 계약 · 사고 요약','선택 수재계약 요약'],
+  ];
+  const PH=[
+    ['사고번호, 증권번호, 피보험자, 사고유형 검색','증권번호, 피보험자명으로 검색'],
+    ['사고번호, 증권번호, 피보험자','증권번호, 피보험자명'],
+  ];
+  function sweep(){
+    const root=document.getElementById('inwardClaim'); if(!root) return;
     try{
-      var res = await postAi('/api/ai/extract-slip',{ text: combined });
-      if((res.mock || !res.fields) && typeof extractSlipOffer==='function'){
-        state.slipExtract = extractSlipOffer(combined); // 키 없을 때 로컬 추출기로 폴백
-      } else {
-        var f = res.fields || {};
-        state.slipExtract = { fields:f, confidence:Number(f.confidence||0) };
-      }
-      if(typeof renderSlipExtractResult==='function') renderSlipExtractResult();
-    }catch(e){ if(box) box.innerHTML = '<span class="required-warn">AI 추출 실패: '+esc(e.message)+'</span>'; }
+      const w=document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
+      const hits=[];
+      while(w.nextNode()){ const n=w.currentNode; if(n.nodeValue && REPL.some(([a])=>n.nodeValue.includes(a))) hits.push(n); }
+      hits.forEach(n=>{ let v=n.nodeValue; REPL.forEach(([a,b])=>{ v=v.split(a).join(b); }); n.nodeValue=v; });
+      root.querySelectorAll('input[placeholder],textarea[placeholder]').forEach(el=>{
+        PH.forEach(([a,b])=>{ if(el.placeholder && el.placeholder.includes(a)) el.placeholder=el.placeholder.split(a).join(b); });
+      });
+    }catch(e){console.warn('[v65]',e);}
+  }
+  const prevSwitch=window.switchTab;
+  window.switchTab=function(tab){ if(typeof prevSwitch==='function') prevSwitch(tab); if(tab==='inwardClaim') setTimeout(sweep,80); };
+  window.addEventListener('load',()=>{ setTimeout(sweep,4700); });
+})();
+
+/* ===== v66: 해외수재 클레임 — 기간계 입력용 CSV 내보내기 ===== */
+(function(){
+  window.exportClaimsCSV = function(){
+    const rows = (state.inwardClaims || []);
+    if(!rows.length){ alert('내보낼 클레임이 없습니다.'); return; }
+    const cols = [
+      ['사고번호','claimNo'],['증권번호','policyNo'],['피보험자','insured'],
+      ['국가','country'],['도시','city'],['보험종목','line'],['사고유형','cause'],
+      ['사고일','claimDate'],['통지일','noticeDate'],
+      ['Paid손해액(억원)','paidLossEok'],['Outstanding손해액(억원)','outstandingLossEok'],
+      ['추산손해액(억원)','estimatedLossEok'],['Gross손해액(억원)','grossLossEok'],
+      ['업무처리단계','status'],['기간계입력상태','portalStatus'],['담당자','owner'],['메모','memo']
+    ];
+    const esc = v => { v=(v==null?'':String(v)); return /[",\r\n]/.test(v) ? '"'+v.replace(/"/g,'""')+'"' : v; };
+    const header = cols.map(c=>c[0]).join(',');
+    const body = rows.map(r=>cols.map(c=>esc(r[c[1]])).join(',')).join('\r\n');
+    const csv = '\uFEFF' + header + '\r\n' + body;   // BOM: Excel 한글 깨짐 방지
+    try{
+      const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const today = (state.meta && state.meta.asOfDate) ? state.meta.asOfDate : new Date().toISOString().slice(0,10);
+      a.href = url; a.download = '해외수재클레임_기간계입력용_'+today+'.csv';
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(()=>URL.revokeObjectURL(url), 1000);
+      const m=document.getElementById('icMsg'); if(m) m.innerText = rows.length+'건 CSV 내보내기 완료';
+    }catch(e){ console.warn('[v66 csv]',e); alert('CSV 내보내기 중 오류가 발생했습니다.'); }
   };
 })();
 
-/* ===== 4단계: 실제 인증 + 권한(RBAC) + 승인 워크플로 =====
-   가짜 로그인을 서버 인증(JWT)으로 교체. 역할별 메뉴 노출 제한, 관리자 사용자관리. */
+/* ===== v68: Layer 소진 관리 검색 — 한글 입력(IME) 끊김 수정 ===== */
 (function(){
-  var TKEY='gra_token';
-  function getToken(){ return sessionStorage.getItem(TKEY)||''; }
-  function setToken(t){ if(t) sessionStorage.setItem(TKEY,t); else sessionStorage.removeItem(TKEY); }
-  function authHeaders(){ var t=getToken(); return t?{'Authorization':'Bearer '+t}:{}; }
-  function jhdr(){ return Object.assign({'Content-Type':'application/json'}, authHeaders()); }
-  window.__graAuthHeaders = authHeaders;
-
-  // 역할별 접근 가능한 탭 ('*'=전체)
-  var ROLE_TABS = {
-    ADMIN: '*',
-    GLOBAL: ['dashboard','intake','inward','contract','location','treaty','docs'],
-    UW: ['dashboard','inward','contract','location','accident','treaty','impact','layer','reinstatement','docs'],
-    CLAIM: ['dashboard','contract','location','inwardClaim','accident','treaty','docs'],
-    USER: ['dashboard','contract','location','treaty','docs']
-  };
-  function allowedTabs(role){ var t=ROLE_TABS[role]; return t==='*'?null:(t||ROLE_TABS.USER); }
-  window.__graAllowedTab = function(tab){ var allow=allowedTabs((state.user||{}).role); return !allow || allow.indexOf(tab)>=0; };
-
-  function applyRoleMenu(role){
-    var allow = allowedTabs(role);
-    document.querySelectorAll('.sidebar nav button[data-tab]').forEach(function(b){
-      var ok = !allow || allow.indexOf(b.getAttribute('data-tab'))>=0;
-      b.style.display = ok ? '' : 'none';
-    });
-  }
-
-  // switchTab 권한 가드
-  if(typeof window.switchTab==='function'){
-    var _origSwitch = window.switchTab;
-    window.switchTab = function(tab){
-      if(state.user && !window.__graAllowedTab(tab)){ alert('이 메뉴에 접근할 권한이 없습니다.'); return; }
-      return _origSwitch.apply(this, arguments);
+  // 입력할 때마다 보드 전체를 재렌더하면 입력창이 사라져 한글 조합이 깨진다.
+  // → 재렌더 없이 카드 show/hide 로 필터, compositionstart/end 로 조합 보호.
+  function wireLayerSearch(){
+    const input=document.getElementById('layerAccSearch');
+    if(!input) return;
+    input.removeAttribute('oninput');           // 재렌더 트리거 제거
+    if(input.dataset.imeWired==='1') return;
+    input.dataset.imeWired='1';
+    let composing=false;
+    const apply=()=>{
+      const q=(input.value||'').toLowerCase().trim();
+      const list=document.querySelector('.acc-list-compact-v61'); if(!list) return;
+      let shown=0;
+      list.querySelectorAll('.acc-row-v61').forEach(row=>{
+        const hit=!q || row.textContent.toLowerCase().includes(q);
+        row.style.display=hit?'':'none'; if(hit) shown++;
+      });
+      let empty=list.querySelector('.ime-empty');
+      if(shown===0){
+        if(!empty){ empty=document.createElement('div'); empty.className='mini-msg ime-empty'; empty.textContent='검색 결과가 없습니다.'; list.appendChild(empty); }
+        empty.style.display='';
+      } else if(empty){ empty.style.display='none'; }
     };
+    input.addEventListener('compositionstart',()=>{ composing=true; });
+    input.addEventListener('compositionend',()=>{ composing=false; apply(); });
+    input.addEventListener('input',()=>{ if(!composing) apply(); });
   }
+  const prev=window.renderLayerTable;
+  window.renderLayerTable=function(){
+    if(typeof prev==='function') prev.apply(this,arguments);
+    const input=document.getElementById('layerAccSearch');
+    if(input){ input.dataset.imeWired=''; wireLayerSearch(); }
+  };
+  const prevSwitch=window.switchTab;
+  window.switchTab=function(tab){ if(typeof prevSwitch==='function') prevSwitch(tab); if(tab==='layer') setTimeout(wireLayerSearch,60); };
+  window.addEventListener('load',()=>setTimeout(wireLayerSearch,4800));
+})();
 
-  function showApp(user){
-    state.user = user;
-    var ls=document.getElementById('loginScreen'); if(ls) ls.style.display='none';
-    var ub=document.getElementById('userBadge'); if(ub) ub.innerText = user.empNo+' · '+user.role;
-    applyRoleMenu(user.role);
-    try{ if(typeof window.renderUsers==='function') window.renderUsers(); }catch(e){}
-  }
-  function showLogin(msg){
-    state.user = null; setToken('');
-    var ls=document.getElementById('loginScreen'); if(ls) ls.style.display='flex';
-    var ub=document.getElementById('userBadge'); if(ub) ub.innerText='미로그인';
-    var m=document.getElementById('loginMsg'); if(m) m.innerHTML = msg ? '<span class="required-warn">'+msg+'</span>' : '';
-  }
+/* ===== v69: 체결 출재/수재계약 조회 + PPW 도래 알림 출재/수재 구분 ===== */
+(function(){
+  const q=(id)=>document.getElementById(id);
+  const esc=(s)=>String(s ?? '').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  const won=(v)=>(typeof eok==='function'?eok(v):v+'억원');
+  const DAY=86400000;
+  function diff(d){ if(!d) return 9999; try{ const base=new Date((state.meta?.asOfDate||new Date().toISOString().slice(0,10))+'T00:00:00'); const t=new Date(String(d).slice(0,10)+'T00:00:00'); return Math.ceil((t-base)/DAY);}catch(e){return 9999;} }
+  function cessions(){ return (state.cessions && state.cessions.length) ? state.cessions : (DATA.cessions||[]); }
+  function contractsList(){ return (state.contracts && state.contracts.length) ? state.contracts : (DATA.contracts||[]); }
+  if(!state.cessions) state.cessions = (DATA.cessions||[]).slice();
+  state.contractBasis = state.contractBasis || 'inward';
 
-  window.login = async function(){
-    var empNo=(document.getElementById('loginEmpNo').value||'').trim();
-    var password=document.getElementById('loginPassword').value||'';
-    var m=document.getElementById('loginMsg'); if(m) m.innerText='';
-    if(!empNo||!password){ if(m) m.innerHTML='<span class="required-warn">사번과 패스워드를 입력하세요.</span>'; return; }
-    try{
-      var r=await fetch('/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({empNo:empNo,password:password})});
-      var d=await r.json();
-      if(!r.ok) throw new Error(d.error||'로그인 실패');
-      setToken(d.token); showApp(d.user);
-    }catch(e){ if(m) m.innerHTML='<span class="required-warn">'+e.message+'</span>'; }
+  // ---------- 체결 출재/수재계약 조회 ----------
+  window.setContractBasis = function(b){
+    state.contractBasis=b; state.pages=state.pages||{}; state.pages.contract=1;
+    document.querySelectorAll('.contract-basis-btn').forEach(x=>x.classList.toggle('active', x.dataset.basis===b));
+    const lf=q('contractLineFilter'); if(lf) lf.style.display='';   // 둘 다 보종 필터 사용
+    window.renderContractTable();
+  };
+  window.renderContractTable = function(){
+    if(typeof setMetaText==='function'){ try{ setMetaText(); }catch(e){} }
+    const basis=state.contractBasis||'inward';
+    const qstr=(q('contractSearch')?.value||'').toLowerCase();
+    const line=q('contractLineFilter')?.value||'전체';
+    const thead=document.querySelector('#contractTable thead tr');
+    const tbody=document.querySelector('#contractTable tbody'); if(!tbody) return;
+    const PAGE_SIZE=(typeof PAGE!=='undefined'?PAGE:10);
+    state.pages=state.pages||{}; state.pages.contract=state.pages.contract||1;
+
+    if(basis==='outward'){
+      const rows=cessions().filter(c=>(!qstr||JSON.stringify(c).toLowerCase().includes(qstr))&&(line==='전체'||c.line===line));
+      const total=Math.max(1,Math.ceil(rows.length/PAGE_SIZE));
+      state.pages.contract=Math.min(state.pages.contract,total);
+      const page=rows.slice((state.pages.contract-1)*PAGE_SIZE,state.pages.contract*PAGE_SIZE);
+      if(thead) thead.innerHTML='<th>출재번호</th><th>재보험자</th><th>유형</th><th>원수 피보험자</th><th>국가/종목</th><th>출재 가입금액</th><th>출재 보험료</th><th>출재 PPW</th><th>납입상태</th>';
+      tbody.innerHTML=page.map(c=>`<tr>
+        <td>${esc(c.cessionNo)}<br><span class="source-pill outward">기간계 출재</span></td>
+        <td>${esc(c.reinsurer)}</td><td>${esc(c.type)}</td><td>${esc(c.originalInsured)}</td>
+        <td>${esc(c.country)} / ${esc(c.line)}</td>
+        <td>${won(c.cededTsiEok)}</td>
+        <td>${won(c.cededPremiumEok)}<br><small>${esc(c.currency)} ${Number(c.cededPremiumOriginal||0).toLocaleString()}</small></td>
+        <td>${esc(c.ppwDate)}</td>
+        <td><span class="pay-pill ${esc(c.paymentStatus)}">${esc(c.paymentStatus)}</span></td></tr>`).join('')||'<tr><td colspan="9">출재계약 데이터가 없습니다.</td></tr>';
+      const cc=q('contractCount'); if(cc) cc.innerHTML=`출재계약 ${rows.length}건 · 기간계 출재 데이터 기준 · 출재 PPW = 우리가 재보험자에게 출재보험료를 낼 기한(미준수 시 담보 해지)`;
+      const pg=q('contractPage'); if(pg) pg.innerText=`${state.pages.contract} / ${total}`;
+      return;
+    }
+    // 수재(기존)
+    const rows=contractsList().filter(c=>(!qstr||JSON.stringify(c).toLowerCase().includes(qstr))&&(line==='전체'||c.line===line));
+    const total=Math.max(1,Math.ceil(rows.length/PAGE_SIZE));
+    state.pages.contract=Math.min(state.pages.contract,total);
+    const page=rows.slice((state.pages.contract-1)*PAGE_SIZE,state.pages.contract*PAGE_SIZE);
+    if(thead) thead.innerHTML='<th>증권번호</th><th>피보험자</th><th>국가/도시</th><th>보험종목</th><th>가입금액</th><th>보험료</th><th>만기일</th>';
+    tbody.innerHTML=page.map(c=>`<tr><td>${esc(c.policyNo)}<br><span class="source-pill official">기간계 수재계약</span></td><td>${esc(c.insured)}</td><td>${esc(c.country)}/${esc(c.city)}</td><td>${esc(c.line)}</td><td>${won(c.tsiEok)}</td><td>${won(c.premiumEok)}</td><td>${esc(c.renewalDate)||'-'}</td></tr>`).join('');
+    const cc=q('contractCount'); if(cc) cc.innerHTML=`수재계약 ${rows.length}건 · 월마감 후 기간계에서 내려받은 해외수재 계약 기준`;
+    const pg=q('contractPage'); if(pg) pg.innerText=`${state.pages.contract} / ${total}`;
   };
 
-  window.register = async function(){
-    var wrap=document.getElementById('loginNameWrap');
-    var m=document.getElementById('loginMsg');
-    if(wrap && wrap.style.display==='none'){ wrap.style.display=''; if(m) m.innerHTML='<span class="muted">이름을 입력하고 다시 [사번 등록]을 누르세요.</span>'; return; }
-    var empNo=(document.getElementById('loginEmpNo').value||'').trim();
-    var password=document.getElementById('loginPassword').value||'';
-    var nameEl=document.getElementById('loginName');
-    var name=(nameEl?nameEl.value:'').trim();
-    if(!empNo||!password){ if(m) m.innerHTML='<span class="required-warn">사번과 패스워드를 입력하세요.</span>'; return; }
-    try{
-      var r=await fetch('/api/auth/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({empNo:empNo,password:password,name:name})});
-      var d=await r.json();
-      if(!r.ok) throw new Error(d.error||'등록 실패');
-      if(m) m.innerHTML='<span style="color:#2e7d32">'+d.message+'</span>';
-    }catch(e){ if(m) m.innerHTML='<span class="required-warn">'+e.message+'</span>'; }
+  // ---------- PPW 도래 알림: 출재(낼 돈·담보해지) / 수재(받을 돈·미수) ----------
+  function outwardPPW(){ return cessions().map(c=>({...c,_d:diff(c.ppwDate)})).filter(c=>(c._d>=-30&&c._d<=7)||c.paymentStatus==='미납').sort((a,b)=>a._d-b._d); }
+  function inwardPPW(){ return (typeof window.officialPPWRows==='function'?window.officialPPWRows():[]).map(c=>({...c,_d:diff(c.ppwDate)})).sort((a,b)=>a._d-b._d); }
+  function outBadge(c){
+    const d=c._d;
+    if(c.paymentStatus==='미납'||d<0) return '<span style="background:#fee2e2;color:#b91c1c;padding:2px 8px;border-radius:10px;font-weight:700;font-size:12px">출재료 미납 · 담보 해지 위험</span>';
+    if(d<=3) return '<span style="background:#fee2e2;color:#b91c1c;padding:2px 8px;border-radius:10px;font-weight:700;font-size:12px">담보 해지 임박 D-'+d+'</span>';
+    return '<span style="background:#fef3c7;color:#b45309;padding:2px 8px;border-radius:10px;font-weight:600;font-size:12px">출재료 납입 임박 D-'+d+'</span>';
+  }
+  function inBadge(c){
+    const d=c._d;
+    if(d<=3) return '<span style="background:#ffedd5;color:#c2410c;padding:2px 8px;border-radius:10px;font-weight:700;font-size:12px">수재료 미수 임박 D-'+d+'</span>';
+    return '<span style="background:#e0e7ff;color:#3730a3;padding:2px 8px;border-radius:10px;font-size:12px">납입 확인 필요 D-'+d+'</span>';
+  }
+  function ppwPanel(){ let p=q('ppwPanel'); if(!p){ const t=q('ppwTable'); p=t?t.closest('.panel'):null; if(p) p.id='ppwPanel'; } return p; }
+
+  window.renderPPW = function(){
+    const panel=ppwPanel(); if(!panel) return;
+    const out=outwardPPW(), inn=inwardPPW();
+    const outRows = out.length ? out.map(c=>`<tr><td style="padding:7px 9px;border-bottom:1px solid #eef2f7">${esc(c.cessionNo)}</td><td style="padding:7px 9px;border-bottom:1px solid #eef2f7">${esc(c.reinsurer)}</td><td style="padding:7px 9px;border-bottom:1px solid #eef2f7">${esc(c.originalInsured)}</td><td style="padding:7px 9px;border-bottom:1px solid #eef2f7">${esc(c.ppwDate)}</td><td style="padding:7px 9px;border-bottom:1px solid #eef2f7">D-${c._d}</td><td style="padding:7px 9px;border-bottom:1px solid #eef2f7">${won(c.cededPremiumEok)}</td><td style="padding:7px 9px;border-bottom:1px solid #eef2f7">${outBadge(c)}</td></tr>`).join('') : '<tr><td colspan="7" style="color:#64748b;padding:10px">7일 이내 출재 PPW 도래 건이 없습니다.</td></tr>';
+    const inRows = inn.length ? inn.map(c=>`<tr><td style="padding:7px 9px;border-bottom:1px solid #eef2f7">${esc(c.policyNo)}</td><td style="padding:7px 9px;border-bottom:1px solid #eef2f7">${esc(c.insured)}</td><td style="padding:7px 9px;border-bottom:1px solid #eef2f7">${esc(c.line)}</td><td style="padding:7px 9px;border-bottom:1px solid #eef2f7">${esc(c.ppwDate)}</td><td style="padding:7px 9px;border-bottom:1px solid #eef2f7">D-${c._d}</td><td style="padding:7px 9px;border-bottom:1px solid #eef2f7">${inBadge(c)}</td></tr>`).join('') : '<tr><td colspan="6" style="color:#64748b;padding:10px">7일 이내 수재 PPW 도래 건이 없습니다.</td></tr>';
+    const th='style="background:#f1f5f9;text-align:left"'; const td='style="padding:7px 9px;border-bottom:1px solid #eef2f7"';
+    panel.innerHTML=`
+      <h3>PPW 도래 알림 <span class="data-badge">조회일 기준 7일 이내</span></h3>
+      <p class="muted" style="margin:0 0 12px">PPW(보험료납입 워런티) 마감일을 출재/수재로 구분해 표시합니다. 보험료 수금·정산 회계는 기간계/회계 본업이며, 이 화면은 마감일을 놓치지 않도록 <b>알림만</b> 제공합니다.</p>
+      <div style="border:1px solid #fecaca;border-radius:12px;padding:12px 14px;margin-bottom:14px;background:#fff7f7">
+        <div style="font-weight:700;color:#b91c1c;margin-bottom:2px">① 출재 PPW — 우리가 재보험자에게 낼 출재보험료 (놓치면 우리 담보 해지)</div>
+        <div class="muted" style="margin-bottom:8px">기준: 기간계 출재계약 데이터 · 미준수 시 해당 출재 담보가 해지됩니다.</div>
+        <div style="overflow:auto"><table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr ${th}><th style="padding:7px 9px">출재번호</th><th style="padding:7px 9px">재보험자</th><th style="padding:7px 9px">원수 피보험자</th><th style="padding:7px 9px">출재 PPW</th><th style="padding:7px 9px">D-Day</th><th style="padding:7px 9px">출재보험료</th><th style="padding:7px 9px">위험도</th></tr></thead>
+        <tbody>${outRows}</tbody></table></div>
+      </div>
+      <div style="border:1px solid #fed7aa;border-radius:12px;padding:12px 14px;background:#fffaf5">
+        <div style="font-weight:700;color:#c2410c;margin-bottom:2px">② 수재 PPW — 출재사가 우리에게 낼 수재보험료 (미수 관리)</div>
+        <div class="muted" style="margin-bottom:8px">기준: 기간계 체결 수재계약 데이터 · 받을 보험료(미수) 관리 목적입니다.</div>
+        <div style="overflow:auto"><table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr ${th}><th style="padding:7px 9px">증권번호</th><th style="padding:7px 9px">피보험자</th><th style="padding:7px 9px">종목</th><th style="padding:7px 9px">수재 PPW</th><th style="padding:7px 9px">D-Day</th><th style="padding:7px 9px">상태</th></tr></thead>
+        <tbody>${inRows}</tbody></table></div>
+      </div>`;
   };
 
-  window.logout = function(){ showLogin(); };
-
-  // 관리자 사용자관리 화면 (#userTable)
-  window.renderUsers = async function(){
-    var tb=document.querySelector('#userTable tbody'); if(!tb) return;
-    if(!state.user || state.user.role!=='ADMIN'){ tb.innerHTML='<tr><td colspan="4" class="muted">관리자만 사용자 관리를 볼 수 있습니다.</td></tr>'; return; }
-    try{
-      var r=await fetch('/api/users',{headers:authHeaders()});
-      var d=await r.json();
-      if(!r.ok) throw new Error(d.error||'목록 조회 실패');
-      var roles=d.roles||['ADMIN','GLOBAL','UW','CLAIM','USER'];
-      tb.innerHTML = d.users.map(function(u){
-        var roleSel='<select onchange="setUserRole(\''+u.id+'\',this.value)">'+roles.map(function(rr){return '<option '+(rr===u.role?'selected':'')+'>'+rr+'</option>';}).join('')+'</select>';
-        var approveBtn = u.approved
-          ? '<button class="secondary-btn" onclick="approveUser(\''+u.id+'\',false)">승인취소</button>'
-          : '<button onclick="approveUser(\''+u.id+'\',true)">승인</button>';
-        var delBtn = (u.empNo===state.user.empNo) ? '' : ' <button class="danger-btn" onclick="deleteUser(\''+u.id+'\')">삭제</button>';
-        return '<tr><td>'+u.empNo+(u.name?(' / '+u.name):'')+'</td><td>'+roleSel+'</td><td>'+(u.approved?'승인됨':'<b>승인대기</b>')+'</td><td>'+approveBtn+delBtn+'</td></tr>';
-      }).join('');
-    }catch(e){ tb.innerHTML='<tr><td colspan="4" class="required-warn">'+e.message+'</td></tr>'; }
+  // 대시보드 PPW 목록 모달도 출재/수재 구분
+  const prevList=window.showDashboardList;
+  window.showDashboardList=function(kind){
+    if(kind!=='ppw'){ if(typeof prevList==='function') return prevList(kind); return; }
+    const out=outwardPPW(), inn=inwardPPW();
+    const trO=out.map(c=>`<tr><td style="padding:6px 8px">${esc(c.cessionNo)}</td><td style="padding:6px 8px">${esc(c.reinsurer)}</td><td style="padding:6px 8px">${esc(c.ppwDate)}</td><td style="padding:6px 8px">D-${c._d}</td><td style="padding:6px 8px">${outBadge(c)}</td></tr>`).join('')||'<tr><td colspan="5" style="padding:8px;color:#64748b">없음</td></tr>';
+    const trI=inn.map(c=>`<tr><td style="padding:6px 8px">${esc(c.policyNo)}</td><td style="padding:6px 8px">${esc(c.insured)}</td><td style="padding:6px 8px">${esc(c.ppwDate)}</td><td style="padding:6px 8px">D-${c._d}</td><td style="padding:6px 8px">${inBadge(c)}</td></tr>`).join('')||'<tr><td colspan="5" style="padding:8px;color:#64748b">없음</td></tr>';
+    let m=q('graListModal');
+    if(!m){ m=document.createElement('div'); m.id='graListModal'; m.style.cssText='position:fixed;inset:0;background:rgba(15,23,42,.55);display:none;align-items:center;justify-content:center;z-index:99999;padding:24px'; m.innerHTML='<div style="background:#fff;border-radius:14px;max-width:820px;width:100%;max-height:82vh;overflow:auto;padding:22px 24px;box-shadow:0 20px 60px rgba(0,0,0,.3)"><div id="graListBody"></div><div style="text-align:right;margin-top:14px"><button id="graListClose" style="padding:8px 18px;border:none;border-radius:8px;background:#0f172a;color:#fff;cursor:pointer">닫기</button></div></div>'; document.body.appendChild(m); m.addEventListener('click',e=>{if(e.target===m)m.style.display='none';}); q('graListClose').addEventListener('click',()=>{m.style.display='none';}); }
+    q('graListBody').innerHTML=`<h3 style="margin:0 0 10px">PPW 도래 알림 (7일 이내)</h3>
+      <h4 style="color:#b91c1c;margin:6px 0">① 출재 PPW · 놓치면 우리 담보 해지</h4>
+      <table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr style="background:#f1f5f9;text-align:left"><th style="padding:6px 8px">출재번호</th><th style="padding:6px 8px">재보험자</th><th style="padding:6px 8px">출재 PPW</th><th style="padding:6px 8px">D-Day</th><th style="padding:6px 8px">위험도</th></tr></thead><tbody>${trO}</tbody></table>
+      <h4 style="color:#c2410c;margin:16px 0 6px">② 수재 PPW · 미수 관리</h4>
+      <table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr style="background:#f1f5f9;text-align:left"><th style="padding:6px 8px">증권번호</th><th style="padding:6px 8px">피보험자</th><th style="padding:6px 8px">수재 PPW</th><th style="padding:6px 8px">D-Day</th><th style="padding:6px 8px">상태</th></tr></thead><tbody>${trI}</tbody></table>`;
+    m.style.display='flex';
+    const dl=q('dashboardList'); if(dl) dl.innerHTML='';
   };
-  window.approveUser = async function(id, approved){ await fetch('/api/users/'+id+'/approve',{method:'POST',headers:jhdr(),body:JSON.stringify({approved:approved})}); window.renderUsers(); };
-  window.setUserRole = async function(id, role){ await fetch('/api/users/'+id+'/role',{method:'POST',headers:jhdr(),body:JSON.stringify({role:role})}); window.renderUsers(); };
-  window.deleteUser = async function(id){ if(!confirm('이 사용자를 삭제할까요?')) return; await fetch('/api/users/'+id,{method:'DELETE',headers:authHeaders()}); window.renderUsers(); };
 
-  // 초기화: 토큰 검증 후 앱/로그인 화면 결정
-  window.addEventListener('load', function(){
-    var t=getToken();
-    if(!t){ showLogin(); return; }
-    fetch('/api/auth/me',{headers:authHeaders()})
-      .then(function(r){ return r.ok?r.json():null; })
-      .then(function(d){ if(d&&d.user) showApp(d.user); else showLogin('세션이 만료되었습니다. 다시 로그인하세요.'); })
-      .catch(function(){ showLogin(); });
-  });
+  const prevSwitch=window.switchTab;
+  window.switchTab=function(tab){ if(typeof prevSwitch==='function') prevSwitch(tab); if(tab==='contract') setTimeout(()=>{ try{ window.renderContractTable(); window.renderPPW(); }catch(e){} },70); };
+  window.addEventListener('load',()=>setTimeout(()=>{ try{ window.renderPPW(); }catch(e){} },4900));
+})();
+
+/* ===== v70: 수재계약 입력관리(진행관리) CSV 내보내기 ===== */
+(function(){
+  const q=(id)=>document.getElementById(id);
+  window.exportFacCSV = function(){
+    const rows=(state.fac||[]);
+    if(!rows.length){ alert('내보낼 수재계약이 없습니다.'); return; }
+    const latest=f=>{ const h=(f.statusHistory||[])[0]; return h?((h.at||'')+' '+(h.by||'')+' → '+(h.status||'')):''; };
+    const cols=[
+      ['수재관리번호','inwardRef'],['접수번호','intakeNo'],['피보험자','insured'],
+      ['국가','country'],['도시','city'],['보험종목','line'],
+      ['가입금액(억원)','tsiEok'],['보험료(억원)','premiumEok'],['통화','currency'],
+      ['보험료(원통화)','premiumOriginal'],['출재사','cedant'],['PPW','ppwDate'],
+      ['진행상태','reviewStatus'],['검토담당','reviewOwner'],['접수경로','requestSource'],
+      ['수재확정노트','confirmNote'],['메모','memo']
+    ];
+    const esc=v=>{ v=(v==null?'':String(v)); return /[",\r\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; };
+    const header=cols.map(c=>c[0]).concat('최근 변경 로그').join(',');
+    const body=rows.map(r=>cols.map(c=>esc(r[c[1]])).concat(esc(latest(r))).join(',')).join('\r\n');
+    const csv='\uFEFF'+header+'\r\n'+body;
+    try{
+      const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+      const url=URL.createObjectURL(blob); const a=document.createElement('a');
+      const today=(state.meta&&state.meta.asOfDate)?state.meta.asOfDate:new Date().toISOString().slice(0,10);
+      a.href=url; a.download='수재계약입력관리_'+today+'.csv';
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(()=>URL.revokeObjectURL(url),1000);
+      const m=q('facMsg'); if(m) m.innerText=rows.length+'건 CSV 내보내기 완료';
+    }catch(e){ console.warn('[v70 csv]',e); alert('CSV 내보내기 중 오류가 발생했습니다.'); }
+  };
+  function ensureFacCsvBtn(){
+    const sec=q('inward'); if(!sec) return;
+    const panel=sec.querySelector('#facTable')?.closest('.panel'); if(!panel) return;
+    if(panel.querySelector('.fac-csv-btn')) return;
+    const row=panel.querySelector('.bulk-action-row'); if(!row) return;
+    row.style.display='flex'; row.style.alignItems='center'; row.style.gap='8px';
+    const b=document.createElement('button');
+    b.className='fac-csv-btn'; b.textContent='⬇ 진행관리 CSV 내보내기';
+    b.style.cssText='margin-left:auto;padding:8px 16px;background:#0f766e;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;white-space:nowrap';
+    b.onclick=exportFacCSV;
+    row.appendChild(b);
+  }
+  const prevSwitch=window.switchTab;
+  window.switchTab=function(tab){ if(typeof prevSwitch==='function') prevSwitch(tab); if(tab==='inward') setTimeout(ensureFacCsvBtn,90); };
+  window.addEventListener('load',()=>setTimeout(ensureFacCsvBtn,5100));
 })();

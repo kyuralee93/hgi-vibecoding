@@ -3,10 +3,10 @@ services:
     image: postgres:16-alpine
     environment:
       POSTGRES_USER: gra
-      POSTGRES_PASSWORD: gra
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-gra}
       POSTGRES_DB: gra
     ports:
-      - "5433:5432"        # 로컬 DB GUI/개발 접속용 (호스트 5433 → 컨테이너 5432)
+      - "5434:5432" # 로컬 DB GUI/개발 접속용 (호스트 5434 → 컨테이너 5432)
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -18,17 +18,16 @@ services:
   server:
     build: ./server
     environment:
-      DATABASE_URL: postgresql://gra:gra@db:5432/gra
+      DATABASE_URL: postgresql://gra:${POSTGRES_PASSWORD:-gra}@db:5432/gra
       CLIENT_DIR: /client
       PORT: 3000
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
-      AI_MODEL: ${AI_MODEL:-claude-opus-4-8}
+      ANTHROPIC_MODEL: ${ANTHROPIC_MODEL:-claude-sonnet-4-6}
       JWT_SECRET: ${JWT_SECRET:-gra-dev-secret-change-me}
     ports:
-      - "3000:3000"
+      - "3001:3000"
     volumes:
-      - ./client:/client          # 프론트엔드 수정 시 재빌드 불필요
-      - ./uploads:/app/uploads     # 업로드 파일 보존
+      - ./client:/client # 프론트엔드 수정 시 재빌드 불필요
     depends_on:
       db:
         condition: service_healthy

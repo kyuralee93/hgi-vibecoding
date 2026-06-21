@@ -1,12 +1,12 @@
 {
   "version": "0.0.1",
-  "autoPort": true,
   "configurations": [
     {
-      "name": "gra",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "--prefix", "server"],
-      "port": 3100
+      "name": "gra-prod-local",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["server/index.js"],
+      "autoPort": true,
+      "port": 3002
     }
   ]
 }

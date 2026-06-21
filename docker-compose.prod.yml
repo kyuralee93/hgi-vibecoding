@@ -1,0 +1,61 @@
+# 프로덕션용 compose (단일 인스턴스 배포)
+# 개발용 docker-compose.yml 과 달리:
+#  - Caddy 리버스프록시가 80/443을 받고, 도메인이 있으면 HTTPS 인증서를 자동 발급
+#  - server/db 포트를 호스트에 노출하지 않음(보안). 외부 접근은 Caddy 경유만.
+#  - 모든 비밀값은 .env(=.env.prod.example 복사)에서 주입
+#
+# 실행:  docker compose -f docker-compose.prod.yml up -d --build
+services:
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    environment:
+      SITE_ADDRESS: ${SITE_ADDRESS:-:80} # 도메인(예: gra.example.com) 또는 :80(IP 전용)
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - server
+
+  server:
+    build: ./server
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://gra:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}@db:5432/gra
+      CLIENT_DIR: /client
+      PORT: 3000
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      ANTHROPIC_MODEL: ${ANTHROPIC_MODEL:-claude-sonnet-4-6}
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET}
+    expose:
+      - "3000" # 내부 네트워크에만 노출(Caddy가 프록시)
+    volumes:
+      - ./client:/client:ro
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: gra
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+      POSTGRES_DB: gra
+    # 호스트 포트 노출 안 함 — DB는 컨테이너 네트워크 내부에서만 접근
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gra"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  pgdata:
+  caddy_data:
+  caddy_config:

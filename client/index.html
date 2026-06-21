@@ -6,13 +6,14 @@
 <title>글로벌 리스크 아틀라스 v56</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <link rel="stylesheet" href="./styles.css"/>
+<link rel="stylesheet" href="./ux-polish.css"/>
 </head>
 <body>
 <div id="loginScreen" class="login-screen">
   <div class="login-card">
     <div class="login-logo">GRA</div>
     <h1>글로벌 리스크 아틀라스</h1>
-    <p>사번·패스워드로 로그인합니다. 신규 사용자는 사번 등록 후 관리자 승인을 받아야 접근할 수 있습니다.</p>
+    <p>등록된 사번으로 로그인하세요. 신규 사번은 [사번 등록] 후 관리자 승인을 받아야 접근할 수 있습니다.</p>
     <label>사번<input id="loginEmpNo" placeholder="예: 111"/></label>
     <label>패스워드<input id="loginPassword" type="password" placeholder="패스워드"/></label>
     <label id="loginNameWrap" style="display:none">이름<input id="loginName" placeholder="등록 시 이름"/></label>
@@ -27,9 +28,9 @@
     <div class="brand"><div class="logo">GRA</div><div><h1>글로벌 리스크 아틀라스</h1><p>해외수재 · 누적위험 · 사고계약 · 재보험</p></div></div>
     <nav>
       <button class="active" data-tab="dashboard">대시보드</button>
-      <button data-tab="intake">해외계약 Intake</button>
-      <button data-tab="inward">임의수재 계약관리</button>
-      <button data-tab="contract">기간계 수재계약 조회</button>
+      <button data-tab="intake">해외계약 접수</button>
+      <button data-tab="inward">수재계약 입력관리</button>
+      <button data-tab="contract">출재·수재계약 조회</button>
       <button data-tab="location">소재지 누적위험</button>
       <button data-tab="inwardClaim">해외수재 클레임</button>
       <button data-tab="accident">사고계약 데이터</button>
@@ -43,9 +44,10 @@
     </nav>
   </aside>
   <main>
-    <header class="topbar"><h2 id="pageTitle">대시보드</h2><div class="topbar-right"><div class="help-wrap"><button class="secondary-btn help-button" type="button">설명</button><div id="pageHelpTooltip" class="help-tooltip">오늘 처리할 업무와 주요 리스크를 한 화면에서 확인합니다.</div></div><span id="userBadge" class="user-badge">미로그인</span><button class="secondary-btn" onclick="logout()">로그아웃</button></div></header>
+    <header class="topbar"><h2 id="pageTitle">대시보드</h2><div class="topbar-right"><span id="userBadge" class="user-badge">미로그인</span><button class="secondary-btn" onclick="logout()">로그아웃</button></div></header>
 
     <section id="dashboard" class="tab active">
+      <p class="muted" style="margin:0 0 12px">오늘 처리할 업무(검토 중 오퍼·수재확정 미입력·PPW 도래)와 재보험 Layer 소진 현황을 한 화면에서 확인합니다.</p>
       <div class="kpi-grid">
         <div class="kpi clickable" onclick="showDashboardList('renew')"><span>30일 이내 갱신계약</span><b id="kpiRenew">-</b><em><span class="data-badge">기간계 수재계약</span> <span id="contractUpdate1"></span></em></div>
         <div class="kpi clickable" onclick="showDashboardList('ppw')"><span>PPW 도래계약</span><b id="kpiPPW">-</b><em><span class="data-badge">기간계 체결 수재계약</span></em></div>
@@ -59,25 +61,48 @@
     </section>
 
     <section id="contract" class="tab">
-      <div class="panel"><h3>기간계 수재계약 조회 <span class="data-badge">공식 원천</span></h3><p class="muted">월마감 후 기간계에서 내려받은 해외수재 계약 데이터를 조회합니다. 소재지 누적위험의 공식 기준으로 사용됩니다. 업데이트: <span id="contractUpdate3"></span></p><div class="toolbar-row"><input id="contractSearch" placeholder="증권번호, 피보험자, 국가, 도시 검색" oninput="renderContractTable()"/><select id="contractLineFilter" onchange="renderContractTable()"><option>전체</option><option>Package</option><option>기술보험</option><option>해상적하</option><option>배상책임</option><option>사이버</option></select><button onclick="renderContractTable()">검색</button></div><div id="contractCount" class="mini-msg"></div><div class="table-scroll"><table id="contractTable"><thead><tr><th>증권번호</th><th>피보험자</th><th>국가/도시</th><th>보험종목</th><th>가입금액</th><th>보험료</th><th>만기일</th></tr></thead><tbody></tbody></table></div><div class="pager"><button onclick="pageContract(-1)">이전</button><span id="contractPage">1 / 1</span><button onclick="pageContract(1)">다음</button></div></div>
+      <style>
+        #contract .basis-toggle{display:inline-flex;gap:6px;background:#eef2f7;padding:4px;border-radius:10px;margin:6px 0 12px}
+        #contract .basis-toggle .contract-basis-btn{border:none;background:transparent;color:#475569;padding:7px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600}
+        #contract .basis-toggle .contract-basis-btn.active{background:#fff;color:#0f172a;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+        #contract .source-pill.outward{background:#eef2ff;color:#3730a3}
+        #contract .pay-pill{padding:2px 8px;border-radius:10px;font-size:12px;font-weight:600}
+        #contract .pay-pill.미납{background:#fee2e2;color:#b91c1c}
+        #contract .pay-pill.납입예정{background:#fef3c7;color:#b45309}
+        #contract .pay-pill.납입완료{background:#dcfce7;color:#166534}
+      </style>
+      <div class="panel"><h3>출재·수재계약 조회 <span class="data-badge">기간계 공식 원천</span></h3><p class="muted">월마감 후 기간계에서 내려받은 해외 <b>수재</b>(우리가 인수) 및 <b>출재</b>(우리가 재보험자에게 넘긴) 계약 데이터를 조회합니다. 업데이트: <span id="contractUpdate3"></span></p>
+        <div class="basis-toggle"><button class="contract-basis-btn active" data-basis="inward" onclick="setContractBasis('inward')">수재계약 (인수)</button><button class="contract-basis-btn" data-basis="outward" onclick="setContractBasis('outward')">출재계약 (재출재)</button></div>
+        <div class="toolbar-row"><input id="contractSearch" placeholder="증권번호, 피보험자, 국가, 도시 검색" oninput="renderContractTable()"/><select id="contractLineFilter" onchange="renderContractTable()"><option>전체</option><option>Package</option><option>기술보험</option><option>해상적하</option><option>배상책임</option><option>사이버</option></select><button onclick="renderContractTable()">검색</button></div><div id="contractCount" class="mini-msg"></div><div class="table-scroll"><table id="contractTable"><thead><tr><th>증권번호</th><th>피보험자</th><th>국가/도시</th><th>보험종목</th><th>가입금액</th><th>보험료</th><th>만기일</th></tr></thead><tbody></tbody></table></div><div class="pager"><button onclick="pageContract(-1)">이전</button><span id="contractPage">1 / 1</span><button onclick="pageContract(1)">다음</button></div></div>
+      <div class="panel" id="ppwPanel"><div id="ppwTable"></div></div>
     </section>
 
 
     <section id="intake" class="tab">
+      <style>
+        #intake .intake-grid{display:grid;grid-template-columns:1.05fr 1fr;gap:16px;align-items:start}
+        @media(max-width:1000px){#intake .intake-grid{grid-template-columns:1fr}}
+        #intake #rawIntakeText{min-height:460px !important;height:460px;width:100%;box-sizing:border-box;font-size:14px;line-height:1.55;padding:12px 14px;resize:vertical;border:1px solid #cbd5e1;border-radius:10px}
+        #intake #rawIntakeText:focus{outline:none;border-color:#4f46e5;box-shadow:0 0 0 2px rgba(79,70,229,.12)}
+        #intake #normalizeResult{min-height:120px;font-size:13px;line-height:1.5}
+        #intake input[type=file]#intakeFile{margin-bottom:10px}
+        #intake .paste-hint{font-size:12px;color:#64748b;margin:2px 0 10px}
+      </style>
       <div class="panel compact-panel">
         <div class="panel-title-row">
           <div>
-            <h3>해외계약 Intake</h3>
+            <h3>해외계약 접수</h3>
             <p class="screen-caption">주재원·브로커·계열사로부터 받은 메일 또는 Slip 내용을 표준 항목으로 정리합니다.</p>
           </div>
-          <div class="help-wrap inline-help"><button class="secondary-btn help-button" type="button">설명</button><div class="help-tooltip">주재원은 플랫폼에 직접 접속하지 않고, 메일 등으로 글로벌사업부에 업무를 요청합니다. 글로벌사업부는 접수 내용을 Intake로 등록하고, 필요 시 재물·특종·해상 UW 또는 클레임 담당자에게 검토를 요청합니다.</div></div>
+          
         </div>
       </div>
       <div class="panel-grid intake-grid">
         <div class="panel compact-panel">
-          <h3>메일·Slip 내용 붙여넣기</h3>
+          <h3>메일·Slip 원문 붙여넣기</h3>
+          <p class="paste-hint">계약 의뢰 Slip 파일(.pdf/.txt/.csv)을 올리거나, 이메일 본문을 아래에 붙여넣은 뒤 <b>기본정제</b>를 누르면 핵심 항목이 오른쪽 표준 접수 폼에 자동 입력됩니다.</p>
           <input type="file" id="intakeFile" accept=".txt,.csv,.pdf" onchange="readIntakeFile(this.files[0])"/>
-          <textarea id="rawIntakeText" rows="14" class="large-textarea" placeholder="주재원 또는 브로커 메일 본문을 붙여넣으세요.&#10;예: Insured, Country, City, Line, TSI, Premium, Partner, Renewal Date, Loss History, Claim Amount, Claim Description"></textarea>
+          <textarea id="rawIntakeText" rows="22" class="large-textarea" placeholder="여기에 메일 본문이나 Slip 주요 조건을 붙여넣으세요.&#10;&#10;예시 항목: Insured, Country, City, Class of Business, Sum Insured(TSI), Premium, Currency, Cedant/Broker, Renewal/PPW Date, Loss History, Claim Amount, Remarks"></textarea>
           <div class="bulk-action-row clean-actions">
             <button onclick="loadSampleIntake()">샘플</button>
             <button onclick="normalizeIntake()">기본정제</button>
@@ -86,7 +111,7 @@
           <div id="normalizeResult" class="result-box compact-result">정제 결과가 여기에 표시됩니다.</div>
         </div>
         <div class="panel compact-panel">
-          <h3>표준 Intake 등록</h3>
+          <h3>표준 접수 등록</h3>
           <input id="intakeEditId" type="hidden"/>
           <div class="form-grid labeled">
             <label>접수 경로<select id="intakeSource"><option>주재원 메일</option><option>브로커 이메일</option><option>계열사 요청</option><option>본사 접수</option><option>기타</option></select></label>
@@ -116,10 +141,10 @@
       </div>
       <div class="panel compact-panel">
         <div class="panel-title-row">
-          <h3>Intake 목록</h3>
+          <h3>접수 목록</h3>
           <div class="bulk-action-row clean-actions"><input id="intakeSearch" placeholder="피보험자, 국가, 파트너 검색" oninput="renderIntakeTable()"/><select id="intakeStageFilter" onchange="renderIntakeTable()"><option>전체</option><option>접수</option><option>정제완료</option><option>UW 검토</option><option>기간계 입력대상</option><option>보류</option></select><button class="danger-btn" onclick="deleteSelectedIntakes()">선택 삭제</button></div>
         </div>
-        <div class="table-scroll"><table id="intakeTable"><thead><tr><th><input type="checkbox" onclick="toggleChecks('.intake-check',this.checked)"/></th><th>Intake No.</th><th>피보험자</th><th>국가/도시</th><th>종목</th><th>TSI</th><th>사고이력</th><th>검토 담당</th><th>처리</th></tr></thead><tbody></tbody></table></div>
+        <div class="table-scroll"><table id="intakeTable"><thead><tr><th><input type="checkbox" onclick="toggleChecks('.intake-check',this.checked)"/></th><th>접수번호</th><th>피보험자</th><th>국가/도시</th><th>종목</th><th>TSI</th><th>사고이력</th><th>검토 담당</th><th>처리</th></tr></thead><tbody></tbody></table></div>
         <div id="intakeCount" class="mini-msg"></div>
       </div>
     </section>
@@ -154,38 +179,56 @@
         <div id="slipExtractResult" class="result-box">추출 결과가 여기에 표시됩니다. 자동추출 후 사용자가 확인한 값만 등록화면으로 반영하세요.</div>
       </div>
 
-<div class="panel"><h3>임의수재 계약 등록</h3><p class="notice">기간계 입력 전 신규 해외수재 계약을 실시간으로 관리하는 화면입니다. 등록 후 PPW·클레임·누적위험 관리에 활용됩니다.</p><div class="form-grid labeled"><label>피보험자<input id="facInsured"/></label><label>국가<input id="facCountry"/></label><label>도시<input id="facCity"/></label><label>보험종목<select id="facLine"><option>Package</option><option>기술보험</option><option>해상적하</option><option>배상책임</option></select></label><label>가입금액 TSI(억원)<input id="facTsi" type="number" value="1000"/></label><label>보험료(계약통화)<input id="facPremiumOriginal" type="number" value="500000"/></label><label>통화<select id="facCurrency"><option>USD</option><option>EUR</option><option>JPY</option><option>GBP</option><option>KRW</option></select></label><label>출재사<input id="facCedant"/></label><label>Slip/인수내용 요약<input id="facSlipSummary"/></label><label>PPW<input id="facPPW" type="date"/></label><label>등록 담당자<input id="facOwner"/></label></div><label class="full-label">수재계약 메모<textarea id="facMemo" rows="3"></textarea></label><button onclick="registerFac()">등록</button><span id="facMsg" class="mini-msg"></span></div>
+<div class="panel"><h3>임의수재 계약 등록</h3><p class="notice">기간계 입력 전 신규 해외수재 계약을 실시간으로 관리하는 화면입니다. 등록 후 PPW·클레임·누적위험 관리에 활용됩니다.</p><div class="form-grid labeled"><label>피보험자<input id="facInsured"/></label><label>국가<input id="facCountry"/></label><label>도시<input id="facCity"/></label><label>보험종목<select id="facLine"><option>Package</option><option>기술보험</option><option>해상적하</option><option>배상책임</option></select></label><label>가입금액 TSI(억원)<input id="facTsi" type="number" value="1000"/></label><label>수재보험료(계약통화)<input id="facPremiumOriginal" type="number" value="500000"/></label><label>통화<select id="facCurrency"><option>USD</option><option>EUR</option><option>JPY</option><option>GBP</option><option>KRW</option></select></label><label>출재사<input id="facCedant"/></label><label>경유처<input id="facIntermediary" placeholder="브로커/프론팅 경유사 (비우면 직접 수재)"/></label><label>수재유형<input id="facType" value="임의재보험(Fac)" disabled/></label><label>수금상태<select id="facReceivable"><option>미수</option><option>수금예정</option><option>부분수금</option><option>수금완료</option><option>확인중</option></select></label><label>Slip/인수내용 요약<input id="facSlipSummary"/></label><label>PPW<input id="facPPW" type="date"/></label><label>등록 담당자<input id="facOwner"/></label></div><label class="full-label">수재계약 메모<textarea id="facMemo" rows="3"></textarea></label><button onclick="registerFac()">등록</button><span id="facMsg" class="mini-msg"></span></div>
       <div class="panel"><h3>임의수재 계약 조회</h3><div class="toolbar-row"><input id="facSearch" placeholder="수재관리번호, 피보험자, 출재사 검색" oninput="renderFacTable()"/><select id="facStatusFilter" onchange="renderFacTable()"><option>전체</option><option>정상</option><option>미수</option><option>부분입금</option><option>확인중</option></select><button onclick="renderFacTable()">검색</button></div><div class="bulk-action-row"><button class="danger-btn" onclick="deleteSelectedFac()">선택 삭제</button><span class="delete-note">체크한 수재건을 일괄 삭제합니다.</span></div><div id="facCount" class="mini-msg"></div><div class="table-scroll"><table id="facTable"><thead><tr><th><input type="checkbox" onclick="toggleChecks('.fac-check',this.checked)"/></th><th>수재관리번호</th><th>피보험자</th><th>국가/도시</th><th>보험종목</th><th>보험료</th><th>PPW</th><th>미수상태</th><th>처리</th></tr></thead><tbody></tbody></table></div><div class="pager"><button onclick="pageFac(-1)">이전</button><span id="facPage">1 / 1</span><button onclick="pageFac(1)">다음</button></div></div>
-      <div class="panel"><h3>PPW / 미수 관리</h3><div class="toolbar-row"><input id="ppwSearch" placeholder="수재관리번호, 담당자 검색" oninput="renderPPW()"/><select id="ppwStatusFilter" onchange="renderPPW()"><option>전체</option><option>정상</option><option>미수</option><option>부분입금</option><option>확인중</option></select><button onclick="renderPPW()">검색</button></div><div class="table-scroll"><table id="ppwTable"><thead><tr><th>수재관리번호</th><th>피보험자</th><th>PPW</th><th>D-Day</th><th>미수상태</th><th>등록 담당자</th><th>미수 담당자</th><th>저장/이력</th></tr></thead><tbody></tbody></table></div><div class="pager"><button onclick="pagePPW(-1)">이전</button><span id="ppwPage">1 / 1</span><button onclick="pagePPW(1)">다음</button></div></div>
+      
     </section>
 
 
 
     <section id="inwardClaim" class="tab">
+      <style>
+        #inwardClaim .claim-workspace{display:grid;grid-template-columns:1.35fr 1fr;gap:14px;align-items:start}
+        @media(max-width:980px){#inwardClaim .claim-workspace{grid-template-columns:1fr}}
+        #inwardClaim .claim-source-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(225px,1fr));gap:10px;max-height:360px;overflow:auto;padding:4px;align-content:start}
+        #inwardClaim .claim-source-card{box-sizing:border-box;border:1px solid #e2e8f0;border-radius:10px;padding:10px 12px;cursor:pointer;background:#fff;min-height:108px;display:flex;flex-direction:column;gap:4px;transition:border-color .12s}
+        #inwardClaim .claim-source-card:hover{border-color:#c7d2fe}
+        #inwardClaim .claim-source-card.active{border-color:#4f46e5;box-shadow:0 0 0 2px rgba(79,70,229,.15)}
+        #inwardClaim .claim-source-card .rowtop{display:flex;justify-content:space-between;align-items:center;gap:6px}
+        #inwardClaim .claim-source-card h4{margin:0;font-size:14px}
+        #inwardClaim .claim-source-card small{color:#64748b;font-size:12px;line-height:1.35}
+        #inwardClaim .claim-source-card .claim-amount{margin-top:auto;font-weight:700;color:#c2410c;font-size:13px}
+        #inwardClaim .claim-source-card .status-chip{font-size:11px;padding:1px 8px;border-radius:10px;background:#f1f5f9;color:#475569;white-space:nowrap}
+        #inwardClaim .claim-source-card .status-chip.ok-chip{background:#dcfce7;color:#166534}
+        #inwardClaim #icTable td .inline-status{min-width:118px}
+        #inwardClaim #icTable td small{color:#94a3b8;font-size:11px}
+        #inwardClaim .csv-export-btn{width:auto;flex:0 0 auto;padding:8px 16px;background:#0f766e;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;white-space:nowrap}
+        #inwardClaim .csv-export-btn:hover{background:#115e59}
+      </style>
       <div class="panel compact-panel">
         <div class="panel-title-row">
           <div>
             <h3>해외수재 클레임</h3>
-            <p class="screen-caption">기간계 사고계약 데이터를 기준으로 대상 증권을 확인하고, 해당 수재계약의 클레임 처리이력·서베이리포트·검토메모를 집적합니다.</p>
+            <p class="screen-caption">기간계 체결 수재계약을 기준으로 대상 증권을 확인하고, 해당 수재계약의 클레임 처리이력·서베이리포트·검토메모를 집적합니다.</p>
           </div>
-          <div class="help-wrap inline-help"><button class="secondary-btn help-button" type="button">설명</button><div class="help-tooltip">해외수재 클레임은 이미 체결된 수재계약에서 발생한 사고입니다. 먼저 기간계 사고계약 데이터를 검색해 대상 증권번호를 선택한 뒤, 서베이리포트 요약과 처리메모를 연결합니다.</div></div>
+          
         </div>
       </div>
 
       <div class="claim-workspace">
         <div class="panel compact-panel claim-search-panel">
-          <h3>1. 기간계 사고계약 선택</h3>
+          <h3>1. 기간계 체결 수재계약 선택</h3>
           <div class="toolbar-row">
-            <input id="icAccidentSearch" class="wide" placeholder="사고번호, 증권번호, 피보험자, 사고유형 검색" oninput="renderClaimAccidentSearch()"/>
-            <select id="icAccidentStatus" onchange="renderClaimAccidentSearch()"><option>전체</option><option>접수</option><option>검토중</option><option>준비금 설정</option><option>회수 검토</option><option>종결</option></select>
+            <input id="icAccidentSearch" class="wide" placeholder="증권번호, 피보험자명으로 검색" oninput="renderClaimAccidentSearch()"/>
+            <select id="icContractLine" onchange="renderClaimAccidentSearch()"><option>전체</option><option>Package</option><option>기술보험</option><option>해상적하</option><option>배상책임</option><option>사이버</option></select>
             <button onclick="renderClaimAccidentSearch()">조회</button>
           </div>
           <div id="icAccidentResults" class="claim-source-list"></div>
         </div>
 
         <div class="panel compact-panel claim-detail-panel">
-          <h3>2. 선택 계약·사고 요약</h3>
-          <div id="icSelectedAccident" class="result-box">기간계 사고계약을 선택하면 증권번호 기준으로 수재계약 정보와 사고금액이 표시됩니다.</div>
+          <h3>2. 선택 수재계약 요약</h3>
+          <div id="icSelectedAccident" class="result-box">기간계 체결 수재계약을 선택하면 증권번호 기준으로 수재계약 정보와 사고금액이 표시됩니다.</div>
           <div class="claim-summary-grid">
             <div><span>증권번호</span><b id="icPolicyView">-</b></div>
             <div><span>피보험자</span><b id="icInsuredView">-</b></div>
@@ -207,7 +250,7 @@
             <label>Paid 손해액(억원)<input id="icPaid" type="number" value="0"/></label>
             <label>Outstanding 손해액(억원)<input id="icOS" type="number" value="0"/></label>
             <label>추산손해액(억원)<input id="icLoss" type="number" value="0"/></label>
-            <label>처리상태<select id="icStatus"><option>접수</option><option>검토중</option><option>서베이 검토</option><option>추가자료 요청</option><option>재보험 검토</option><option>종결</option></select></label>
+            <label>업무 처리단계<select id="icStatus"><option>접수</option><option>검토중</option><option>서베이 검토</option><option>추가자료 요청</option><option>재보험 검토</option><option>종결</option></select></label>
             <label>담당자<input id="icOwner" placeholder="담당자"/></label>
           </div>
           <label class="full-label">사고 개요 / 쟁점 메모<textarea id="icDesc" rows="3" placeholder="사고 원인, 손상 범위, 담보 쟁점, 출재사 요청사항, 재보험 통보 필요사항"></textarea></label>
@@ -227,12 +270,12 @@
       <div class="panel compact-panel">
         <h3>5. 해외수재 클레임 Queue</h3>
         <div class="toolbar-row">
-          <input id="icQueueSearch" placeholder="사고번호, 증권번호, 피보험자 검색" oninput="renderInwardClaims()"/>
-          <select id="icQueueStatus" onchange="renderInwardClaims()"><option>전체</option><option>접수</option><option>검토중</option><option>서베이 검토</option><option>추가자료 요청</option><option>재보험 검토</option><option>종결</option></select>
+          <input id="icQueueSearch" placeholder="증권번호, 피보험자명 검색" oninput="renderInwardClaims()"/>
+          <select id="icQueueStatus" onchange="renderInwardClaims()"><option>전체</option><option>미등록</option><option>입력준비</option><option>추가확인 필요</option><option>기간계 입력완료</option><option>입력제외</option></select>
           <button onclick="renderInwardClaims()">조회</button>
         </div>
-        <div class="bulk-action-row"><button class="danger-btn" onclick="deleteSelectedInwardClaims()">선택 삭제</button><span class="delete-note">체크한 클레임을 Queue에서 삭제합니다.</span></div>
-        <div class="table-scroll"><table id="icTable"><thead><tr><th><input type="checkbox" onclick="toggleChecks('.ic-check',this.checked)"/></th><th>사고번호</th><th>증권번호</th><th>피보험자</th><th>사고유형</th><th>Paid/OS</th><th>처리상태</th><th>선택</th></tr></thead><tbody></tbody></table></div>
+        <div class="bulk-action-row" style="display:flex;align-items:center;gap:8px"><button class="danger-btn" onclick="deleteSelectedInwardClaims()">선택 삭제</button><span class="delete-note">체크한 클레임을 Queue에서 삭제합니다.</span><button class="csv-export-btn" style="margin-left:auto" onclick="exportClaimsCSV()">⬇ 기간계 입력용 CSV</button></div>
+        <div class="table-scroll"><table id="icTable"><thead><tr><th><input type="checkbox" onclick="toggleChecks('.ic-check',this.checked)"/></th><th>사고번호</th><th>증권번호</th><th>피보험자</th><th>사고유형</th><th>Paid/OS</th><th>기간계 입력상태</th><th>업무 처리단계</th><th>수정</th></tr></thead><tbody></tbody></table></div>
       </div>
     </section>
 
@@ -258,18 +301,58 @@
 
     <section id="layer" class="tab"><div class="panel"><h3>Layer 소진 관리</h3><p class="muted">기간계 데이터 자동 계산이 아니라 재보험 담당자가 Treaty별 Layer 사용액을 저장하는 화면입니다.</p><button class="danger-btn" onclick="resetLayers()">사용액 초기화</button> <button class="danger-btn" onclick="resetLayerClaims()">연결사고/계약 초기화</button></div><div class="panel"><div class="table-scroll"><table id="layerTable"><thead><tr><th>프로그램</th><th>Layer</th><th>기본한도</th><th>Paid 사용액</th><th>Outstanding 사용액</th><th>복원 후 추가한도</th><th>잔여한도</th><th>소진율</th><th>저장</th></tr></thead><tbody></tbody></table></div></div></section>
 
-    <section id="reinstatement" class="tab"><div class="panel"><h3>복원보험료 계산</h3><p class="muted">일반적인 Pro-rata as to Amount and Time 방식의 예시 계산입니다. 실제 적용은 Treaty wording을 확인해야 합니다.</p></div><div class="panel-grid"><div class="panel"><h3>입력값</h3><div class="form-grid labeled"><label>연간 재보험료(억원)<input id="rpAnnual" type="number" value="40"/></label><label>Layer 한도(억원)<input id="rpLimit" type="number" value="500"/></label><label>Layer 사용 손해액(억원)<input id="rpUsed" type="number" value="120"/></label><label>복원보험료율(%)<input id="rpRate" type="number" value="100"/></label><label>잔여일수<input id="rpRemainDays" type="number" value="180"/></label><label>보험기간일수<input id="rpPolicyDays" type="number" value="365"/></label></div><button onclick="calcReinstatement()">계산</button></div><div class="panel"><h3>산출 결과</h3><div id="rpResult" class="result-box">입력 후 계산을 누르세요.</div></div></div></section>
+    <section id="reinstatement" class="tab">
+      <style>
+        #reinstatement .rp-explain{background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:16px 18px}
+        #reinstatement .rp-explain h4{margin:14px 0 6px;font-size:13.5px;color:#1d4ed8}
+        #reinstatement .rp-explain h4:first-of-type{margin-top:4px}
+        #reinstatement .rp-explain p{margin:0 0 8px;font-size:13px;line-height:1.6;color:#334155}
+        #reinstatement .rp-formula{background:#0f172a;color:#e2e8f0;border-radius:10px;padding:12px 14px;font-size:13px;line-height:1.7;margin:6px 0 10px;overflow-x:auto}
+        #reinstatement .rp-formula b{color:#fbbf24}
+        #reinstatement .rp-vars{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 18px;margin:4px 0 10px}
+        #reinstatement .rp-vars div{font-size:12.5px;color:#475569;line-height:1.5}
+        #reinstatement .rp-vars b{color:#0f172a}
+        #reinstatement .rp-steps{font-size:12.5px;color:#475569;line-height:1.6;margin:0}
+        #reinstatement .rp-steps li{margin-bottom:4px}
+        @media(max-width:760px){#reinstatement .rp-vars{grid-template-columns:1fr}}
+      </style>
+      <div class="panel">
+        <h3>복원보험료 계산</h3>
+        <p class="muted">일반적인 Pro-rata as to Amount and Time(금액·기간 비례) 방식의 예시 계산입니다. 실제 적용은 Treaty wording의 복원 조항을 확인해야 합니다.</p>
+        <div class="rp-explain">
+          <h4>복원보험료(Reinstatement Premium)란?</h4>
+          <p>초과손해(XL) 재보험에서 큰 사고로 <b>Layer 한도가 일부/전부 소진</b>되면, 남은 보험기간 동안 다시 같은 한도를 쓸 수 있도록 한도를 <b>복원(reinstate)</b>합니다. 이때 출재사(우리)가 재보험자에게 추가로 내는 보험료가 <b>복원보험료</b>입니다. 즉 "쓴 만큼, 남은 기간만큼" 한도를 되살리는 대가입니다.</p>
+          <h4>언제 발생하나요?</h4>
+          <p>해당 Layer에서 손해가 회수(소진)되어 잔여한도가 줄어든 시점에 발생합니다. Treaty마다 복원 횟수(예: 1회), 복원료율(예: 100%), 비례 방식(금액비례·기간비례 등)이 다르게 정해져 있습니다.</p>
+          <h4>이 화면의 계산식 (금액·기간 비례)</h4>
+          <div class="rp-formula">복원보험료 = <b>연간 재보험료</b> × <b>(Layer 사용 손해액 ÷ Layer 한도)</b> × <b>복원보험료율</b> × <b>(잔여일수 ÷ 보험기간일수)</b></div>
+          <div class="rp-vars">
+            <div><b>연간 재보험료</b> : 해당 Layer의 1년치 재보험료</div>
+            <div><b>사용액 ÷ 한도</b> : 소진된 비율(금액 비례). 한도를 얼마나 되살리는지</div>
+            <div><b>복원보험료율</b> : Treaty에 정해진 비율(보통 100%)</div>
+            <div><b>잔여일수 ÷ 기간일수</b> : 남은 보험기간 비율(기간 비례)</div>
+          </div>
+          <h4>계산 흐름</h4>
+          <ol class="rp-steps">
+            <li>오른쪽 입력값(연간 재보험료·한도·사용 손해액·복원료율·잔여/전체 일수)을 넣습니다.</li>
+            <li><b>계산</b>을 누르면 위 산식대로 곱해 복원보험료(억원)를 산출합니다.</li>
+            <li>예) 40 × (120÷500) × 100% × (180÷365) ≈ <b>4.7억원</b> &mdash; 한도의 24%를 남은 기간(약 49%)만큼 복원하는 비용.</li>
+          </ol>
+          <p class="muted" style="margin:8px 0 0;font-size:12px">※ 약식 예시입니다. 실제로는 복원 횟수 한도, 면책·공동부담, 사고별/Event별 적용 여부 등 Treaty 조항에 따라 결과가 달라집니다.</p>
+        </div>
+      </div>
+      <div class="panel-grid"><div class="panel"><h3>입력값</h3><div class="form-grid labeled"><label>연간 재보험료(억원)<input id="rpAnnual" type="number" value="40"/></label><label>Layer 한도(억원)<input id="rpLimit" type="number" value="500"/></label><label>Layer 사용 손해액(억원)<input id="rpUsed" type="number" value="120"/></label><label>복원보험료율(%)<input id="rpRate" type="number" value="100"/></label><label>잔여일수<input id="rpRemainDays" type="number" value="180"/></label><label>보험기간일수<input id="rpPolicyDays" type="number" value="365"/></label></div><button onclick="calcReinstatement()">계산</button></div><div class="panel"><h3>산출 결과</h3><div id="rpResult" class="result-box">입력 후 계산을 누르세요.</div></div></div></section>
 
 
     <section id="docs" class="tab">
       <div class="panel">
         <h3>약관·특약 문서관리</h3>
-        <p class="muted">약관, 특약, Slip, Treaty 문서를 등록하고 필요한 경우 요약·번역 초안을 확인합니다. 실제 구축 시 폐쇄형 생성형 AI와 문서 권한관리를 연계합니다. 업데이트: <span id="docUpdate"></span></p>
+        <p class="muted">약관·특약·Slip·Treaty 문서를 <b>사용자가 직접 등록·관리</b>하는 화면입니다. 이 화면은 기간계(계약/사고 시스템)와 연동하지 않으므로 <b>기본제공/사용자등록 구분 없이 모든 문서를 사용자가 등록하고 자유롭게 삭제</b>할 수 있습니다. 아래 예시 문서는 바로 써볼 수 있도록 미리 등록해 둔 것이며, 직접 PDF를 올려 요약·번역을 시연할 수도 있습니다. 실제 구축 시 폐쇄형 생성형 AI와 문서 권한관리를 연계합니다. 업데이트: <span id="docUpdate"></span></p>
         <div class="form-grid labeled"><label>문서명<input id="docTitle"/></label><label>구분<input id="docType" placeholder="약관/특약/Slip/Treaty"/></label><label>키워드<input id="docKeywords"/></label><label>PDF 파일<input id="docFile" type="file" accept="application/pdf"/></label></div>
         <button onclick="registerDoc()">문서 등록</button><span id="docMsg" class="mini-msg"></span>
       </div>
       <div class="panel-grid">
-        <div class="panel"><h3>등록 문서 목록</h3><div class="bulk-action-row"><button class="danger-btn" onclick="deleteSelectedDocs()">선택 삭제</button><span class="delete-note">사용자 등록 문서만 삭제 가능</span></div><div class="table-scroll"><table id="docTable"><thead><tr><th><input type="checkbox" onclick="toggleChecks('.doc-check',this.checked)"/></th><th>문서ID</th><th>문서명</th><th>구분</th><th>키워드</th><th>PDF</th><th>데이터구분</th></tr></thead><tbody></tbody></table></div></div>
+        <div class="panel"><h3>등록 문서 목록</h3><div class="bulk-action-row"><button class="danger-btn" onclick="deleteSelectedDocs()">선택 삭제</button><span class="delete-note">모든 문서 삭제 가능 (기간계 비연동)</span></div><div class="table-scroll"><table id="docTable"><thead><tr><th><input type="checkbox" onclick="toggleChecks('.doc-check',this.checked)"/></th><th>문서ID</th><th>문서명</th><th>구분</th><th>키워드</th><th>PDF</th><th>데이터구분</th></tr></thead><tbody></tbody></table></div></div>
         <div class="panel"><h3>요약·번역</h3><p class="muted">문서를 선택하면 업무 검토용 요약 또는 번역 초안을 생성합니다.</p><label class="full-label">대상 문서<select id="docAiSelect"></select></label><label class="full-label">번역 방향<select id="docTranslateLang"><option value="ko">한국어로 번역</option><option value="en">영어로 번역</option></select></label><div class="bulk-action-row"><button onclick="summarizeSelectedDoc()">문서 요약</button><button class="secondary-btn" onclick="translateSelectedDoc()">번역 초안</button></div><div id="docAiResult" class="result-box">문서를 선택한 뒤 요약 또는 번역을 실행하세요.</div></div>
       </div>
     </section>
@@ -282,7 +365,7 @@
             <h3>재보험 프로그램 설정</h3>
             <p class="screen-caption">재보험 프로그램, Layer, 리드/참여 재보험자, Exclusion 정보를 관리합니다. 저장한 내용은 재보험 프로그램·Layer 소진 관리·대시보드에 즉시 반영됩니다.</p>
           </div>
-          <div class="help-wrap inline-help"><button class="secondary-btn help-button" type="button">설명</button><div class="help-tooltip">프로그램 구조 변경은 대시보드와 Layer 소진 관리에 영향을 줍니다. 실제 운영 시에는 관리자 권한과 변경 이력 승인이 필요합니다.</div></div>
+          
         </div>
       </div>
       <div class="panel-grid">
@@ -338,7 +421,7 @@
           <p class="muted">인식 시트: <b>01_Contracts_System</b>. 직접 만든 파일은 동일 컬럼명을 사용하세요.</p>
           <input type="file" id="adminContractFile" accept=".xlsx,.xls,.csv"/>
           <button onclick="importSystemContractsFromFile()">계약데이터 업로드 반영</button>
-          <div id="adminContractMsg" class="result-box">업로드 후 기간계 수재계약 조회와 소재지 누적위험의 공식 원천이 갱신됩니다.</div>
+          <div id="adminContractMsg" class="result-box">업로드 후 출재·수재계약 조회와 소재지 누적위험의 공식 원천이 갱신됩니다.</div>
         </div>
         <div class="panel">
           <h3>기간계 사고계약 데이터 업로드</h3>
@@ -362,6 +445,15 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<!-- 서버 데이터 주입(DB → window.__SERVER_DATA__) : app.js 보다 먼저 -->
 <script src="/api/bootstrap.js"></script>
+<script src="./server-state.js"></script>
 <script src="./app.js"></script>
+<script src="./config.js"></script>
+<script src="./ai-integration.js"></script>
+<script src="./docs-reinstatement-patch.js"></script>
+<script src="./inward-detail-patch.js"></script>
+<!-- 서버 동기화 + 실제 인증 (가장 마지막에 오버라이드) -->
+<script src="./db-sync.js"></script>
+<script src="./auth-overlay.js"></script>
 </body></html>

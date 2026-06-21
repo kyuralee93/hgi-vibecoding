@@ -1,9 +1,7 @@
 node_modules/
-server/node_modules/
 .env
 server/.env
-server/generated/
+server/node_modules/
+server/prisma/dev.db
 uploads/
-*.log
 .DS_Store
-app.js.prebootstrap.bak

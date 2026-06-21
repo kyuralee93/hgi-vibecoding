@@ -1,0 +1,186 @@
+/* =====================================================================
+ * ux-polish.css   ―  styles.css 다음에 로드되는 UI/UX 1차 정리 시트
+ * ---------------------------------------------------------------------
+ * 기존 styles.css는 수정하지 않습니다. 이 파일이 뒤에서 덮어써
+ * 버튼/입력창 크기를 일관되게 맞추고, 과도하게 큰/작은 요소를 정돈합니다.
+ * 문제가 있으면 이 파일만 지우면 원상복구됩니다.
+ * ===================================================================== */
+
+/* ---- 1) 폼 컨트롤 글자 크기 통일 (제각각 12~14px → 14px) ---- */
+.app input,
+.app select,
+.app textarea {
+  font-size: 14px;
+}
+
+/* ---- 2) 버튼: 과하게 굵고 큰 느낌 완화 (가독성은 유지) ----
+ * 기존 font-weight:800 → 600, 패딩/모서리 정돈.
+ * (인라인 작은 버튼·설명 버튼은 자체 스타일이 우선되어 그대로 작게 유지됨) */
+button {
+  font-weight: 600;
+  padding: 9px 14px;
+  font-size: 14px;
+  border-radius: 10px;
+  line-height: 1.2;
+}
+nav button { font-weight: 700; }            /* 사이드바는 살짝만 가볍게 */
+.secondary-btn, .danger-btn { font-weight: 600; }
+
+/* ---- 3) 과도하게 큰 텍스트 입력창 축소 (320px → 190px) ----
+ * 필요하면 사용자가 모서리를 끌어 늘릴 수 있도록 resize 유지 */
+.large-textarea,
+#slipEmailText {
+  min-height: 190px !important;
+  resize: vertical;
+}
+
+/* ---- 4) 한 줄에 놓인 입력칸+버튼 높이 정렬 (들쭉날쭉 방지) ---- */
+.toolbar-row { align-items: center; }
+.toolbar-row input,
+.toolbar-row select,
+.toolbar-row button { height: 40px; }
+
+/* ---- 5) 너무 작은 입력/선택/버튼 높이를 읽기 편하게 통일 ----
+ * 밀집 영역의 30~33px 컨트롤을 34px로 살짝 키움 */
+.layer-v58-inputs input,
+.layer-v58-inputs button,
+.accident-map-actions select,
+.accident-map-actions button,
+.fac-progress-main select,
+.fac-ppw-mini-table select {
+  height: 34px !important;
+  font-size: 12.5px;
+}
+
+/* ---- 6) 좁은 패널 안에서 입력 그리드가 비좁아 보이지 않게 정돈 ----
+ * Layer 입력칸이 4칸 한 줄로 끼어있던 것을 2칸씩 배치 */
+.layer-v58-inputs {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 8px !important;
+}
+
+/* ---- 7) 액션 버튼들이 좁은 폭에서 겹쳐 보이지 않도록 줄바꿈 허용 ---- */
+.bulk-action-row,
+.clean-actions,
+.fac-toolbar-modern,
+.compact-email-actions,
+.login-actions {
+  flex-wrap: wrap;
+  row-gap: 8px;
+  gap: 8px;
+}
+
+/* ---- 8) 설명 말풍선이 화면 밖으로 나가거나 본문과 겹치지 않게 폭 제한 ---- */
+.help-tooltip {
+  width: min(340px, 80vw);
+}
+
+/* ---- 9) 입력 라벨/칸 간 세로 간격 살짝 정리 (빽빽함 완화) ---- */
+.form-grid.labeled label,
+.full-label {
+  margin-bottom: 4px;
+}
+
+/* ---- 10) 패널 내부 여백 살짝 균일화 (과한 패딩 정돈) ---- */
+.compact-panel { padding: 18px; }
+
+/* ---- 11) 해외수재 클레임(#inwardClaim) 화면 스타일 정렬 ----
+ * 이 섹션은 index.html 본문에 자체 <style>이 있어, 그보다 우선하도록
+ * `.app #inwardClaim` 선택자(높은 명시도)로 덮어씁니다. 다른 화면엔 영향 없음. */
+
+/* (1) 수재계약 선택 카드: 앱 카드 톤에 맞추고, 텍스트 길이와 무관하게 높이 균일화 */
+.app #inwardClaim .claim-source-list {
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px;
+}
+.app #inwardClaim .claim-source-card {
+  min-height: 124px;
+  padding: 12px 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  box-shadow: 0 4px 12px rgba(15, 35, 70, .05);
+  gap: 5px;
+}
+.app #inwardClaim .claim-source-card:hover {
+  border-color: #c7d2fe;
+  box-shadow: 0 8px 20px rgba(31, 78, 216, .10);
+}
+.app #inwardClaim .claim-source-card h4 {
+  font-size: 13.5px;
+  line-height: 1.3;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+/* 길어지는 안내줄은 한 줄로 잘라 카드 높이를 일정하게 유지 */
+.app #inwardClaim .claim-source-card small {
+  display: block;
+  font-size: 11.5px;
+  line-height: 1.45;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+/* (2) 처리정보 등록 폼: 날짜/숫자/선택 입력 높이를 40px로 통일 */
+.app #inwardClaim .form-grid.labeled input,
+.app #inwardClaim .form-grid.labeled select {
+  height: 40px;
+}
+.app #inwardClaim .full-label textarea { min-height: 84px; }
+
+/* (3) 요약 카드(2번)·액션 줄 여백/줄바꿈 정리 */
+.app #inwardClaim .claim-summary-grid { gap: 12px; }
+.app #inwardClaim .claim-summary-grid > div { padding: 12px 14px; }
+.app #inwardClaim .bulk-action-row { flex-wrap: wrap; row-gap: 8px; }
+
+/* ---- 12) 해외계약 접수(#intake): 좌우 패널 높이 정렬 ----
+ * 왼쪽(메일·Slip 원문) 패널이 오른쪽(표준 접수 등록) 폼보다 짧아
+ * 아래에 빈 공간이 생기던 문제를, 두 패널 높이를 맞추고 정제결과
+ * 박스가 남는 공간을 채우게 해 해결합니다. (index.html 본문 인라인
+ * <style>의 align-items:start 보다 우선하도록 `.app` 접두 선택자 사용) */
+.app #intake .intake-grid { align-items: stretch; }
+.app #intake .intake-grid > .panel:first-child {
+  display: flex;
+  flex-direction: column;
+}
+/* '정제 결과' 박스가 왼쪽 패널의 남는 높이를 채워 아래 끝을 맞춤 */
+.app #intake .intake-grid > .panel:first-child #normalizeResult {
+  flex: 1 1 auto;
+}
+
+/* ---- 13) 수재계약 입력관리(#inward) 표(#facTable): 컬럼 폭 정렬 ----
+ * table-layout:fixed 라 8개 컬럼이 균등 분배되어 체크박스 컬럼이 과도하게
+ * 넓고(왼쪽 빈공간) 정보 컬럼이 좁던 문제를, 내용 비중에 맞춰 폭을 지정해
+ * 해결합니다. 좁은 화면에서는 .table-scroll 로 가로 스크롤됩니다. */
+.app #facTable { min-width: 1080px; }
+.app #facTable th:nth-child(1), .app #facTable td:nth-child(1) { width: 4%;  text-align: center; }  /* 체크박스 */
+.app #facTable th:nth-child(2) { width: 11%; }  /* 관리번호 */
+.app #facTable th:nth-child(3) { width: 10%; }  /* Intake */
+.app #facTable th:nth-child(4) { width: 22%; }  /* 계약 정보 */
+.app #facTable th:nth-child(5) { width: 16%; }  /* 위험/보험료 */
+.app #facTable th:nth-child(6) { width: 13%; }  /* 진행상태 */
+.app #facTable th:nth-child(7) { width: 14%; }  /* 최근 변경 로그 */
+.app #facTable th:nth-child(8) { width: 10%; }  /* 처리 */
+/* 체크박스 셀 가운데 정렬 보조 */
+.app #facTable td:nth-child(1) .small-check { margin: 0 auto; display: block; }
+
+/* ---- 14) 임의수재 계약 등록 폼(#inward): 과도하게 큰 입력칸/여백 축소 ----
+ * 입력칸 높이·패딩·모서리·라벨 간격을 줄여 한눈에 보기 편하게 컴팩트화합니다.
+ * (#inward 안에서 라벨형 폼은 이 등록 폼뿐이라 다른 영역엔 영향 없음) */
+.app #inward .form-grid.labeled { gap: 8px 14px; }
+.app #inward .form-grid.labeled label,
+.app #inward .full-label {
+  font-size: 12.5px;
+  gap: 4px;
+  margin-bottom: 4px;
+}
+.app #inward .form-grid.labeled input,
+.app #inward .form-grid.labeled select {
+  height: 36px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+}
+.app #inward .full-label textarea {
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  min-height: 64px;
+}

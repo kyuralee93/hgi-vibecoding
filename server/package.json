@@ -1,7 +1,7 @@
 {
-  "name": "global-risk-atlas-server",
+  "name": "gra-prod-server",
   "version": "1.0.0",
-  "description": "해외 재보험 관리시스템 API 서버",
+  "description": "해외 재보험 관리시스템 API 서버 (gra 최신 프론트 + DB/인증/AI)",
   "private": true,
   "type": "commonjs",
   "scripts": {
@@ -12,7 +12,6 @@
     "setup": "prisma generate && prisma db push && node prisma/seed.js"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.105.0",
     "@prisma/client": "^5.22.0",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.5",
