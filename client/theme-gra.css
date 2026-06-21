@@ -127,8 +127,10 @@ th,td{border-bottom:1px solid var(--line)}
 .demo-note{margin-top:16px;background:var(--page);border-color:var(--line);color:var(--sub);text-align:center;line-height:1.85;font-size:12.5px}
 #loginMsg{margin-top:10px}
 
-/* ===== 로고: App Badge (시안 2) + 한화 폰트 ===== */
-:root{--logo-font:'Hanwha','HanwhaGothic','Hanwha Gothic','한화고딕','한화','Noto Sans KR',Arial,sans-serif}
+/* ===== 로고: App Badge (시안 2) + 한화 폰트(웹폰트 임베드, 라틴 subset) ===== */
+@font-face{font-family:'HanwhaGRA';src:url('./fonts/hanwha-b.woff2') format('woff2');font-weight:600 900;font-style:normal;font-display:swap}
+@font-face{font-family:'HanwhaGRA';src:url('./fonts/hanwha-r.woff2') format('woff2');font-weight:300 500;font-style:normal;font-display:swap}
+:root{--logo-font:'HanwhaGRA','Hanwha','HanwhaGothic','Hanwha Gothic','한화','Noto Sans KR',Arial,sans-serif}
 .gra-badge{background:var(--brand);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;flex:none;border-radius:11px}
 .gra-badge .bgrid{position:absolute;inset:0}
 .gra-badge .bw{font-family:var(--logo-font);font-weight:800;color:#fff;position:relative;letter-spacing:.5px}
