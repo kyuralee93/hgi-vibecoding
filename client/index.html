@@ -9,6 +9,7 @@
 <link rel="stylesheet" href="./styles.css"/>
 <link rel="stylesheet" href="./ux-polish.css"/>
 <link rel="stylesheet" href="./theme-gra.css"/>
+<link rel="stylesheet" href="./impact-v2.css"/>
 </head>
 <body>
 <div id="loginScreen" class="login-screen">
@@ -74,7 +75,6 @@
         <button data-tab="treaty"><i class="ti ti-shield"></i>재보험 프로그램</button>
         <button data-tab="accident"><i class="ti ti-bolt"></i>사고계약 데이터</button>
         <button data-tab="impact"><i class="ti ti-affiliate"></i>사고·재보험 영향분석</button>
-        <button data-tab="layer"><i class="ti ti-stack-2"></i>Layer 소진 관리</button>
         <button data-tab="reinstatement"><i class="ti ti-calculator"></i>복원보험료 계산</button>
       </div>
       <div class="nav-group">
@@ -337,11 +337,76 @@
     </section>
 
     <section id="impact" class="tab">
-      <div class="panel"><h3>사고·재보험 영향분석</h3><p class="muted">내부 사고데이터 자동 연결이 아니라, 재보험 담당자가 사고 시나리오를 직접 입력하고 영향 받을 재보험 프로그램을 선택해 분석합니다.</p><button class="secondary-btn" onclick="fillImpactExample()">예시값 채우기</button></div>
-      <div class="panel-grid"><div class="panel"><h3>1. 사고 시나리오</h3><div class="form-grid labeled"><label>분석명<input id="impactName" placeholder="미국 공장 화재 손해 분석"/></label><label>Risk/Event<select id="impactType" onchange="renderTreatyChoices()"><option>Risk</option><option>Event</option><option>Cat-Event</option></select></label><label>사고유형<input id="impactCause"/></label><label>영향 계약/사고 수<input id="impactCnt" type="number" value="1"/></label><label>Hours Clause<select id="impactHours"><option>해당 없음</option><option>72시간</option><option>96시간</option><option>168시간</option></select></label><label>사고지역<input id="impactRegion"/></label></div><textarea id="impactDesc" rows="4"></textarea></div><div class="panel"><h3>2. 회수 가능 손해액</h3><div class="form-grid labeled"><label>Paid 손해액(억원)<input id="impactPaid" type="number" value="0"/></label><label>Outstanding 손해액(억원)<input id="impactOS" type="number" value="0"/></label><label>면책/비담보(억원)<input id="impactExcluded" type="number" value="0"/></label><label>자기부담금(억원)<input id="impactDeductible" type="number" value="0"/></label><label>한도초과(억원)<input id="impactOver" type="number" value="0"/></label><label>회수불가 비용(억원)<input id="impactNonRec" type="number" value="0"/></label></div><button onclick="calcRecoverable()">회수 가능 손해액 계산</button><div id="recoverableBox" class="result-box"></div></div></div>
-      <div class="panel"><h3>3. 영향 재보험 프로그램 선택</h3><div id="treatyChoices" class="check-grid"></div><button class="primary-wide" onclick="runImpact()">재보험 영향 분석</button></div>
-      <div class="impact-summary"><div class="impact-card"><span>Gross 손해액</span><b id="impactGross">-</b></div><div class="impact-card"><span>회수 가능 손해액</span><b id="impactRecovBase">-</b></div><div class="impact-card"><span>재보험 회수액</span><b id="impactRecovery">-</b></div><div class="impact-card"><span>회사 보유손해</span><b id="impactNet">-</b></div></div>
-      <div class="panel-grid"><div class="panel"><h3>Layer 적용 결과</h3><div id="impactChart"></div></div><div class="panel"><h3>계산 설명</h3><div id="impactComment" class="comment">분석을 실행하세요.</div></div></div>
+      <div class="tabs">
+        <button class="tab-b on" id="ivTabImpact" onclick="ivShow('impact')"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg>사고 영향분석</button>
+        <button class="tab-b" id="ivTabLayer" onclick="ivShow('layer')"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="14" width="16" height="6" rx="1"/><rect x="4" y="4" width="16" height="6" rx="1"/></svg>Layer 소진 현황</button>
+      </div>
+      <section id="view-impact">
+        <p class="page-sub">사고를 고르면 — 우리 재보험으로 <b>얼마를 회수</b>하고 <b>얼마를 떠안는지</b> 숫자 입력 없이 보여줍니다. 추천·계산은 모두 <b>재보험 프로그램 설정값</b>을 따릅니다.</p>
+        <div class="card">
+          <h3><span class="step-no">1</span> 어떤 사고를 분석할까요?</h3>
+          <p class="hint">기간계 사고데이터에서 사고를 고르면 피보험자·보험종목·손해액이 자동으로 채워집니다.</p>
+          <div class="grid2">
+            <div><label class="fld">사고 선택</label><select id="claimSel" onchange="ivClaim()"></select></div>
+            <div id="manualWrap" class="hidden">
+              <div class="grid2" style="gap:10px">
+                <div><label class="fld">보험종목</label><select id="mLine"><option>재물</option><option>Package</option><option>기술보험</option><option>해상적하</option><option>배상책임</option><option>사이버</option></select></div>
+                <div><label class="fld">사고유형</label><select id="mCause"><option>화재</option><option>폭발</option><option>태풍</option><option>홍수</option><option>지진</option><option>침수</option><option>기계손상</option><option>배상책임</option><option>운송 중 파손</option></select></div>
+              </div>
+              <label class="fld" style="margin-top:10px">Gross 손해액(억원)</label><input id="mGross" type="number" value="300" oninput="ivClaim()"/>
+            </div>
+          </div>
+          <div class="claim-info" id="claimInfo"></div>
+        </div>
+        <div class="card">
+          <h3><span class="step-no">2</span> 어떤 재보험이 작동하나요?</h3>
+          <p class="hint">프로그램 설정의 <b>대상 보험종목 · Cat 여부</b>를 기준으로 적용 재보험을 추천합니다. 필요하면 직접 바꿀 수 있습니다.</p>
+          <div class="rec" id="recBox"></div>
+          <div class="prog-row" id="progRow"></div>
+          <div class="adv-toggle" onclick="ivToggleAdv()"><span id="advArrow">▸</span> 고급 설정 (면책·자기부담·복수 사고 합산)</div>
+          <div class="adv" id="adv">
+            <div class="grid3">
+              <div><label class="fld">면책/비담보(억원)</label><input id="aExcl" type="number" value="0" oninput="ivCalc()"/></div>
+              <div><label class="fld">자기부담금(억원)</label><input id="aDed" type="number" value="0" oninput="ivCalc()"/></div>
+              <div><label class="fld">적용 방식</label><input id="aApply" type="text" value="자동" disabled style="background:#f6f8fb;color:#6b7689"/></div>
+              <div><label class="fld">영향 사고 수(Event)</label><input id="aCnt" type="number" value="1" oninput="ivCalc()"/></div>
+            </div>
+          </div>
+        </div>
+        <div class="card" id="resultCard">
+          <h3><span class="step-no">3</span> 회수·보유 결과</h3>
+          <div class="headline" id="headline"></div>
+          <div class="sumchips" id="sumchips"></div>
+          <div><div id="waterfall"></div><div class="wf-leg" id="wfLeg"></div></div>
+          <div style="display:flex;gap:10px;margin:16px 0 14px;flex-wrap:wrap">
+            <button class="btn" onclick="ivReflect()">이 결과를 Layer 소진에 반영</button>
+            <button class="btn gho sm" onclick="ivShow('layer')">Layer 소진 현황 보기 →</button>
+          </div>
+          <div class="explain" id="explain"></div>
+        </div>
+      </section>
+      <section id="view-layer" class="hidden">
+        <p class="page-sub">분석에 반영된 사고들이 각 Layer 한도를 <b>얼마나 썼는지 자동 집계</b>합니다. 복원 적용 시 <b>복원보험료</b>는 설정값(연간 재보험료·복원료율·잔여일수)으로 자동 산출됩니다.</p>
+        <div class="prem-bar">
+          <span class="pb-t">복원보험료 기준</span>
+          <label>보험기간 <input id="gPeriod" type="number" value="365" onchange="ivSetGlobal()"/>일</label>
+          <label>잔여일수 <input id="gRemain" type="number" value="180" onchange="ivSetGlobal()"/>일</label>
+          <label>복원료율 <input id="gRrate" type="number" value="100" onchange="ivSetGlobal()"/>%</label>
+          <button class="btn gho sm" onclick="ivResetCfg()">기본값</button>
+          <span class="pb-f">복원보험료 = 연간재보험료 × (사용÷한도) × 복원료율 × (잔여일수÷보험기간)</span>
+        </div>
+        <div class="setwrap">
+          <div class="sh" onclick="ivToggleSet()"><div class="t"><span class="pin">연동 원천</span> 재보험 프로그램 설정값</div><div class="mini" id="setArrow">▸ 설정값 보기·수정</div></div>
+          <div class="setbody" id="setbody">
+            <p class="mini" style="margin:12px 0 2px;line-height:1.6">이 값이 <b>영향분석 추천 · 소진율 · 복원보험료</b>의 단일 원천입니다. 한 곳에서 바꾸면 두 화면에 즉시 반영됩니다.</p>
+            <div id="setProgs"></div>
+          </div>
+        </div>
+        <div class="kpis" id="layerKpis"></div>
+        <div id="progCards"></div>
+        <div class="note">잔여한도가 부족하거나 100% 소진된 Layer는 <b>복원 적용(1회)</b>을 켜 추가한도를 확보합니다. 복원보험료는 <b>연간 재보험료 × (사용 ÷ 한도) × 복원료율 × (잔여일수 ÷ 보험기간일수)</b>로 자동 계산됩니다.</div>
+      </section>
+      <div class="iv-toast" id="ivToast"></div>
     </section>
 
     <section id="layer" class="tab"><div class="panel"><h3>Layer 소진 관리</h3><p class="muted">기간계 데이터 자동 계산이 아니라 재보험 담당자가 Treaty별 Layer 사용액을 저장하는 화면입니다.</p><button class="danger-btn" onclick="resetLayers()">사용액 초기화</button> <button class="danger-btn" onclick="resetLayerClaims()">연결사고/계약 초기화</button></div><div class="panel"><div class="table-scroll"><table id="layerTable"><thead><tr><th>프로그램</th><th>Layer</th><th>기본한도</th><th>Paid 사용액</th><th>Outstanding 사용액</th><th>복원 후 추가한도</th><th>잔여한도</th><th>소진율</th><th>저장</th></tr></thead><tbody></tbody></table></div></div></section>
@@ -396,7 +461,7 @@
         <div class="form-grid labeled"><label>문서명<input id="docTitle"/></label><label>구분<input id="docType" placeholder="약관/특약/Slip/Treaty"/></label><label>키워드<input id="docKeywords"/></label><label>PDF 파일<input id="docFile" type="file" accept="application/pdf"/></label></div>
         <button onclick="registerDoc()">문서 등록</button><span id="docMsg" class="mini-msg"></span>
       </div>
-      <div class="panel-grid">
+      <div class="docs-stack">
         <div class="panel"><h3>등록 문서 목록</h3><div class="bulk-action-row"><button class="danger-btn" onclick="deleteSelectedDocs()">선택 삭제</button><span class="delete-note">모든 문서 삭제 가능 (기간계 비연동)</span></div><div class="table-scroll"><table id="docTable"><thead><tr><th><input type="checkbox" onclick="toggleChecks('.doc-check',this.checked)"/></th><th>문서ID</th><th>문서명</th><th>구분</th><th>키워드</th><th>PDF</th><th>데이터구분</th></tr></thead><tbody></tbody></table></div></div>
         <div class="panel"><h3>요약·번역</h3><p class="muted">문서를 선택하면 업무 검토용 요약 또는 번역 초안을 생성합니다.</p><label class="full-label">대상 문서<select id="docAiSelect"></select></label><label class="full-label">번역 방향<select id="docTranslateLang"><option value="ko">한국어로 번역</option><option value="en">영어로 번역</option></select></label><div class="bulk-action-row"><button onclick="summarizeSelectedDoc()">문서 요약</button><button class="secondary-btn" onclick="translateSelectedDoc()">번역 초안</button></div><div id="docAiResult" class="result-box">문서를 선택한 뒤 요약 또는 번역을 실행하세요.</div></div>
       </div>
@@ -440,6 +505,7 @@
             <label>구간 종료(억원)<input id="admLayerTo" type="number" value="500"/></label>
             <label>Lead<input id="admLayerLead" placeholder="예: Korean Re"/></label>
             <label>참여사<input id="admLayerParticipants" placeholder="예: Korean Re 35%, Swiss Re 20%, Munich Re 15%"/></label>
+            <label>연간 재보험료(억원)<input id="admLayerAp" type="number" value="0"/></label>
           </div>
           <div class="bulk-action-row clean-actions">
             <button onclick="saveTreatyAdminLayer()">Layer 저장</button>
@@ -475,6 +541,14 @@
           <button onclick="importSystemAccidentsFromFile()">사고데이터 업로드 반영</button>
           <div id="adminAccidentMsg" class="result-box">업로드 후 사고계약 데이터 관리/재보험 영향분석의 사고 원천이 갱신됩니다.</div>
         </div>
+        <div class="panel">
+          <h3>기간계 출재계약 데이터 업로드</h3>
+          <p class="muted">인식 헤더: <b>02_Cessions_System</b> (출재번호·재보험자·보험종목 등). 먼저 현재 데이터를 CSV로 추출해 양식을 확인하세요.</p>
+          <button class="secondary-btn" onclick="downloadCessionSampleCsv()">현재 출재계약 CSV 추출</button>
+          <input type="file" id="adminCessionFile" accept=".xlsx,.xls,.csv" style="margin-top:8px"/>
+          <button onclick="importSystemCessionsFromFile()">출재데이터 업로드 반영</button>
+          <div id="adminCessionMsg" class="result-box">업로드 후 출재·수재계약 조회(출재계약)의 원천이 갱신됩니다.</div>
+        </div>
       </div>
       <div class="panel">
         <h3>현재 반영 데이터</h3>
@@ -502,5 +576,7 @@
 <!-- 서버 동기화 + 실제 인증 (가장 마지막에 오버라이드) -->
 <script src="./db-sync.js"></script>
 <script src="./auth-overlay.js"></script>
+<script src="./impact-v2.js"></script>
+<script src="./cession-admin.js"></script>
 <script src="./nav-icons.js"></script>
 </body></html>

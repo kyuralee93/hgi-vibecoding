@@ -24,6 +24,7 @@ services:
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       ANTHROPIC_MODEL: ${ANTHROPIC_MODEL:-claude-sonnet-4-6}
       JWT_SECRET: ${JWT_SECRET:-gra-dev-secret-change-me}
+      SEED_FORCE: ${SEED_FORCE:-1} # 재기동 시 시드 데이터 강제 복원(시연용)
     ports:
       - "3001:3000"
     volumes:

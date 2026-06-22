@@ -1,0 +1,113 @@
+/* impact-v2.css — '사고·재보험 영향분석' 화면 개선 (설정연동). #impact 스코프로 격리. */
+#impact{--ink:#1f2d4d;--ink2:#3a4760;--mut:#6b7689;--line:#e5e9f0;--card:#fff;--orange:#F8552F;--orangeS:#FFF1EC;--teal:#1c7293;--tealS:#e7f0f4;--amber:#dd9a2e;--red:#c2410c;--green:#1f9d57;--r:14px;--sh:0 6px 18px rgba(36,52,86,.07)}
+#impact .tabs{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap}
+#impact .tab-b{background:#fff;border:1px solid var(--line);border-radius:11px;padding:11px 18px;font-size:14px;font-weight:700;color:var(--ink2);cursor:pointer;display:flex;gap:9px;align-items:center;transition:.15s}
+#impact .tab-b .ic{width:18px;height:18px;opacity:.8}
+#impact .tab-b.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+#impact .page-sub{color:var(--mut);font-size:13.5px;margin-bottom:18px;line-height:1.5}
+#impact .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh);padding:20px 22px;margin-bottom:16px}
+#impact .card h3{font-size:15px;font-weight:800;display:flex;align-items:center;gap:10px;margin-bottom:4px}
+#impact .card .hint{color:var(--mut);font-size:12.5px;margin-bottom:14px;line-height:1.5}
+#impact .step-no{width:26px;height:26px;border-radius:8px;background:var(--orangeS);color:var(--orange);font-size:13px;font-weight:800;display:inline-flex;align-items:center;justify-content:center}
+#impact .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+#impact label.fld{display:block;font-size:12px;font-weight:700;color:var(--mut);margin-bottom:6px}
+#impact select,#impact input[type=number],#impact input[type=text]{width:100%;border:1px solid #d7deea;border-radius:10px;padding:11px 12px;font-size:14px;color:var(--ink);background:#fff}
+#impact select:focus,#impact input:focus{outline:2px solid rgba(248,85,47,.25);border-color:var(--orange)}
+#impact .claim-info{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:14px}
+#impact .claim-info .b{background:#f6f8fb;border:1px solid var(--line);border-radius:11px;padding:11px 13px}
+#impact .claim-info .b .l{font-size:11px;color:var(--mut)}
+#impact .claim-info .b .v{font-size:15px;font-weight:800;margin-top:3px}
+#impact .rec{display:flex;gap:12px;align-items:flex-start;background:var(--tealS);border:1px solid #cfe3ea;border-radius:12px;padding:14px 16px}
+#impact .rec .tag{font-size:11px;font-weight:800;color:#fff;background:var(--teal);border-radius:7px;padding:4px 9px;white-space:nowrap;margin-top:1px}
+#impact .rec .why{font-size:13px;color:#234}
+#impact .rec .why b{color:var(--teal)}
+#impact .prog-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+#impact .prog-opt{border:1.5px solid var(--line);border-radius:11px;padding:11px 14px;cursor:pointer;background:#fff;min-width:160px;transition:.12s}
+#impact .prog-opt .nm{font-weight:800;font-size:13.5px;display:flex;align-items:center;gap:7px}
+#impact .prog-opt .ap{font-size:11px;color:var(--mut);margin-top:3px}
+#impact .prog-opt.sel{border-color:var(--orange);background:var(--orangeS)}
+#impact .dot{width:9px;height:9px;border-radius:3px;display:inline-block}
+#impact .btn{background:var(--orange);color:#fff;border:none;border-radius:10px;padding:12px 20px;font-weight:800;font-size:14px;cursor:pointer}
+#impact .btn:hover{filter:brightness(1.05)}
+#impact .btn.gho{background:#fff;color:var(--ink2);border:1px solid #d7deea}
+#impact .btn.sm{padding:9px 15px;font-size:13px}
+#impact .adv-toggle{font-size:12.5px;color:var(--teal);font-weight:700;cursor:pointer;display:inline-flex;gap:6px;align-items:center;margin-top:14px}
+#impact .adv{display:none;margin-top:14px;padding-top:14px;border-top:1px dashed var(--line)}
+#impact .adv.open{display:block}
+#impact .grid3{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+#impact .headline{font-size:19px;font-weight:800;line-height:1.5;margin-bottom:4px}
+#impact .headline .rec-amt{color:var(--teal)}
+#impact .headline .net-amt{color:var(--orange)}
+#impact .sumchips{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:16px 0}
+#impact .sumchips .c{border:1px solid var(--line);border-radius:12px;padding:13px 15px;background:#fbfcfe}
+#impact .sumchips .c .l{font-size:11.5px;color:var(--mut)}
+#impact .sumchips .c .v{font-size:20px;font-weight:800;margin-top:3px}
+#impact .sumchips .c.kpi-net{background:var(--orangeS);border-color:#f1cba9}
+#impact .sumchips .c.kpi-net .v{color:var(--red)}
+#impact .sumchips .c.kpi-rec{background:var(--tealS);border-color:#cfe3ea}
+#impact .sumchips .c.kpi-rec .v{color:var(--teal)}
+#impact .wf-leg{display:flex;gap:16px;flex-wrap:wrap;font-size:11.5px;color:var(--ink2);margin-top:10px}
+#impact .wf-leg span{display:flex;gap:6px;align-items:center}
+#impact .explain{background:#fbfcfe;border:1px solid var(--line);border-radius:12px;padding:15px 17px;font-size:13.5px;line-height:1.85;color:var(--ink2)}
+#impact .explain .ai{font-size:11.5px;font-weight:800;color:var(--teal);display:flex;gap:7px;align-items:center;margin-bottom:9px}
+#impact .explain b{color:var(--ink)}
+#impact .explain .warn{color:var(--red);font-weight:700}
+#impact .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:16px}
+#impact .kpis .k{background:#fff;border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh);padding:16px 18px}
+#impact .kpis .k .l{font-size:12px;color:var(--mut)}
+#impact .kpis .k .v{font-size:23px;font-weight:800;margin-top:4px}
+#impact .progcard{background:#fff;border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh);margin-bottom:16px;overflow:hidden}
+#impact .progcard .top{height:5px}
+#impact .progcard .pad{padding:18px 20px}
+#impact .progcard .ph{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px}
+#impact .progcard .ph .nm{font-size:16px;font-weight:800}
+#impact .progcard .ph .ap{font-size:11.5px;color:var(--mut)}
+#impact .layer{padding:13px 0;border-top:1px solid var(--line)}
+#impact .layer:first-of-type{border-top:none}
+#impact .layer .lr{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:7px}
+#impact .layer .lname{font-weight:800;font-size:13.5px}
+#impact .layer .lrange{font-size:11.5px;color:var(--mut);margin-left:8px;font-weight:500}
+#impact .layer .lstat{font-size:12px;color:var(--ink2)}
+#impact .layer .lstat b{font-weight:800}
+#impact .bar{height:12px;border-radius:7px;background:#eef1f6;overflow:hidden}
+#impact .bar>i{display:block;height:100%;border-radius:7px;transition:width .6s cubic-bezier(.3,.8,.3,1)}
+#impact .layer .foot{display:flex;justify-content:space-between;align-items:center;margin-top:8px;gap:10px;flex-wrap:wrap}
+#impact .pct{font-size:12px;font-weight:800}
+#impact .reinst{display:flex;gap:7px;align-items:center;font-size:12px;color:var(--ink2);cursor:pointer;user-select:none}
+#impact .reinst .pm{color:var(--teal);font-weight:800}
+#impact .sw{width:34px;height:19px;border-radius:11px;background:#cfd6e2;position:relative;transition:.18s}
+#impact .sw::after{content:"";position:absolute;width:15px;height:15px;border-radius:50%;background:#fff;top:2px;left:2px;transition:.18s}
+#impact .reinst.on .sw{background:var(--teal)}
+#impact .reinst.on .sw::after{left:17px}
+#impact .reinst.dis{opacity:.4;cursor:not-allowed}
+#impact .chips{display:flex;gap:7px;flex-wrap:wrap;margin-top:6px}
+#impact .chip{font-size:11px;font-weight:700;color:var(--ink2);background:#f1f4f9;border:1px solid var(--line);border-radius:13px;padding:4px 11px}
+#impact .note{font-size:12.5px;color:var(--mut);background:#fff8ef;border:1px solid #f1e2c8;border-radius:11px;padding:11px 14px;margin-top:12px;line-height:1.6}
+#impact .hidden{display:none}
+#impact .setwrap{background:#fff;border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh);margin-bottom:16px;overflow:hidden}
+#impact .setwrap .sh{display:flex;justify-content:space-between;align-items:center;padding:15px 20px;cursor:pointer}
+#impact .setwrap .sh .t{font-size:14px;font-weight:800;display:flex;gap:9px;align-items:center}
+#impact .setwrap .sh .t .pin{font-size:10.5px;font-weight:800;color:#fff;background:var(--teal);border-radius:6px;padding:3px 8px}
+#impact .setbody{display:none;padding:0 20px 20px;border-top:1px solid var(--line)}
+#impact .setbody.open{display:block}
+#impact .gset{display:flex;gap:16px;align-items:flex-end;margin:14px 0 6px;flex-wrap:wrap}
+#impact .gset .f{width:160px}
+#impact .setprog{border:1px solid var(--line);border-radius:11px;padding:13px 15px;margin-top:12px}
+#impact .setprog .pn{font-weight:800;font-size:13.5px;display:flex;gap:8px;align-items:center;margin-bottom:9px}
+#impact .stbl{width:100%;border-collapse:collapse;font-size:12px}
+#impact .stbl th{text-align:left;color:var(--mut);font-weight:700;padding:5px 6px;font-size:11px;border-bottom:1px solid var(--line)}
+#impact .stbl td{padding:4px 6px}
+#impact .stbl input{padding:7px 8px;font-size:12.5px;border-radius:8px}
+#impact .sline{display:flex;gap:10px;align-items:center;margin-bottom:9px;flex-wrap:wrap}
+#impact .sline label{font-size:11.5px;color:var(--mut);font-weight:700}
+#impact .sline input[type=text]{width:240px;padding:7px 9px;font-size:12.5px}
+#impact .mini{font-size:11px;color:var(--mut)}
+#impact .prem-bar{display:flex;align-items:center;flex-wrap:wrap;gap:14px;background:#fff;border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh);padding:12px 16px;margin-bottom:16px}
+#impact .prem-bar .pb-t{font-size:12px;font-weight:800;color:#fff;background:var(--teal);border-radius:7px;padding:4px 10px}
+#impact .prem-bar label{font-size:12.5px;font-weight:700;color:var(--ink2);display:flex;align-items:center;gap:6px;margin:0}
+#impact .prem-bar input{width:76px;padding:7px 9px;font-size:13px}
+#impact .prem-bar .pb-f{font-size:11.5px;color:var(--mut);margin-left:auto}
+@media(max-width:980px){#impact .prem-bar .pb-f{margin-left:0;width:100%}}
+.iv-toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(20px);background:#1f2d4d;color:#fff;padding:13px 22px;border-radius:12px;font-size:13.5px;font-weight:700;opacity:0;transition:.3s;z-index:9999;box-shadow:0 10px 30px rgba(0,0,0,.25);pointer-events:none}
+.iv-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+@media(max-width:980px){#impact .grid2{grid-template-columns:1fr}#impact .claim-info{grid-template-columns:repeat(2,1fr)}#impact .grid3{grid-template-columns:repeat(2,1fr)}#impact .sumchips{grid-template-columns:repeat(2,1fr)}#impact .kpis{grid-template-columns:repeat(2,1fr)}}
