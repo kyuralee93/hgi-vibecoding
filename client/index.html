@@ -543,8 +543,7 @@
         </div>
         <div class="panel">
           <h3>기간계 출재계약 데이터 업로드</h3>
-          <p class="muted">인식 헤더: <b>02_Cessions_System</b> (출재번호·재보험자·보험종목 등). 먼저 현재 데이터를 CSV로 추출해 양식을 확인하세요.</p>
-          <button class="secondary-btn" onclick="downloadCessionSampleCsv()">현재 출재계약 CSV 추출</button>
+          <p class="muted">인식 헤더: <b>02_Cessions_System</b> (출재번호·재보험자·보험종목 등). 기간계 마감 파일(CSV/엑셀)을 업로드하면 출재계약 조회에 반영됩니다.</p>
           <input type="file" id="adminCessionFile" accept=".xlsx,.xls,.csv" style="margin-top:8px"/>
           <button onclick="importSystemCessionsFromFile()">출재데이터 업로드 반영</button>
           <div id="adminCessionMsg" class="result-box">업로드 후 출재·수재계약 조회(출재계약)의 원천이 갱신됩니다.</div>
