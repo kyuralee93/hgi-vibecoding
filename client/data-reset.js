@@ -20,14 +20,36 @@
     if (!confirm('시연 중 입력·변경한 모든 데이터를 무시하고 초기 적재 데이터로 되돌립니다.\n계속할까요?')) return;
     var btn = document.getElementById('btnDataReset');
     if (btn) { btn.disabled = true; btn.textContent = '초기화 중…'; }
-    var hdrs = (typeof window.__graAuthHeaders === 'function') ? window.__graAuthHeaders() : {};
-    var p;
-    try { p = fetch('/api/admin/reset', { method: 'POST', headers: hdrs }).then(function (r) { return r.ok; }, function () { return false; }); }
-    catch (e) { p = Promise.resolve(false); }
-    p.then(function () {
+
+    // 서버(gra-prod) 빌드 여부: auth-overlay 가 노출하는 인증 헤더 헬퍼 유무로 판별.
+    var isServer = (typeof window.__graAuthHeaders === 'function');
+
+    if (!isServer) {
+      // 오프라인(gra-local): 서버 DB가 없으므로 localStorage(gra_*)만 비우고 리로드
+      //  → seed-reset.js + seed-data.js 가 시드로 복원.
       clearBusinessKeys();
       location.reload();
-    });
+      return;
+    }
+
+    // 서버(gra-prod): 수재계약 등 DB 영속 데이터는 서버 재시드로만 복원된다.
+    // 실패하면 localStorage만 비워져 '일부만 초기화'되는 오해가 생기므로, 반드시 성공을 확인.
+    window.__GRA_SYNC_DISABLED__ = true; // 리셋 후 옛 state 가 /api/sync 로 되돌아가지 않도록
+    fetch('/api/admin/reset', { method: 'POST', headers: window.__graAuthHeaders() })
+      .then(function (r) {
+        if (r.ok) return r.json().catch(function () { return { ok: true }; });
+        return r.json().then(
+          function (j) { throw new Error((j && j.error) || ('HTTP ' + r.status)); },
+          function () { throw new Error('HTTP ' + r.status); }
+        );
+      })
+      .then(function () { clearBusinessKeys(); location.reload(); })
+      .catch(function (e) {
+        window.__GRA_SYNC_DISABLED__ = false;
+        if (btn) { btn.disabled = false; btn.textContent = '데이터 초기화'; }
+        alert('서버 데이터 초기화에 실패했습니다.\n원인: ' + (e && e.message ? e.message : e) +
+          '\n\n확인 사항\n· 서버에 최신 버전(/api/admin/reset)이 배포되었는지\n· 관리자(ADMIN) 권한으로 로그인했는지');
+      });
   }
   function ensureButton() {
     var dash = document.getElementById('dashboard');

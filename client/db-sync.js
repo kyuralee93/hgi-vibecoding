@@ -22,6 +22,7 @@
 
   function push() {
     timer = null;
+    if (window.__GRA_SYNC_DISABLED__) return; // 데이터 초기화 중 — 옛 state 가 서버를 덮어쓰지 않도록
     try {
       var s = (typeof state !== 'undefined' && state) ? state : {};
       var payload = {
