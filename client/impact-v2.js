@@ -160,11 +160,35 @@
   function reflect() {
     if (!IV.lastResult) { toast('적용 재보험이 없어 반영할 내용이 없습니다'); return; }
     var P = IV.lastResult.P, c = IV.lastResult.c, r = IV.lastResult.r;
+    var ts = new Date().toISOString().slice(0, 16).replace('T', ' ');
+    // 사고 식별자(대시보드 layerClaims 매핑 키). 가상 시나리오는 프로그램별 합성 키 사용.
+    var claimNo = (c && c.id && c.id !== '가상' && c.id !== '__manual') ? c.id : ('영향분석-' + (P.key || ''));
+    var insured = (c && c.insured) || '-';
+    var eventKey = P.isCat ? ((c.cause || 'Event') + (c.date && c.date !== '-' ? ' / ' + c.date : '')) : '';
+    if (typeof state !== 'undefined') state.layerClaims = state.layerClaims || [];
     var applied = 0;
     P.layers.forEach(function (L, i) {
-      if (i === 0 || !(r.layerRec[i] > 0.001)) return;
+      // Company Retention(i=0)은 회사 보유손해(r.ret), 그 외 Layer는 해당 회수액(r.layerRec)
+      var rec = (i === 0) ? r.ret : r.layerRec[i];
+      if (!(rec > 0.001)) return;
       var ls = lsFor(P.key, L.n);
-      if (ls) { ls.paidUsedEok = (+ls.paidUsedEok || 0) + r.layerRec[i]; ls.updatedBy = '영향분석 반영'; ls.updatedAt = new Date().toISOString().slice(0, 16).replace('T', ' '); applied++; }
+      if (!ls) return;
+      // 동일 사고의 이전 반영분(있으면)을 찾아 차감 → 같은 사고 재반영 시 누적/이중계산 방지(사고별 멱등)
+      var prev = (typeof state !== 'undefined' && state.layerClaims) ? state.layerClaims.find(function (x) { return x.statusId === ls.statusId && (x.claimNo || x.policyNo) === claimNo; }) : null;
+      var prevRec = prev ? (+prev.allocPaidEok || 0) : 0;
+      // (1) 직접 사용액 — impact 자체 Layer 소진 현황 기준
+      ls.paidUsedEok = Math.max(0, (+ls.paidUsedEok || 0) - prevRec) + rec; ls.updatedBy = '영향분석 반영'; ls.updatedAt = ts;
+      // (2) layerClaims 매핑 — 대시보드/재보험 프로그램 Layer 적용 현황 기준(동일 사고 중복 제거 후 추가)
+      if (ls.statusId && typeof state !== 'undefined') {
+        state.layerClaims = state.layerClaims.filter(function (x) { return !(x.statusId === ls.statusId && (x.claimNo || x.policyNo) === claimNo); });
+        state.layerClaims.push({
+          statusId: ls.statusId, treatyId: P.key, treatyName: ls.treatyName || P.name, layer: L.n,
+          claimNo: claimNo, insured: insured, line: c.line || '', cause: c.cause || '',
+          allocGrossEok: rec, allocPaidEok: rec, allocOutstandingEok: 0,
+          eventKey: eventKey, sourceType: '영향분석 반영', updatedBy: '영향분석 반영', updatedAt: ts
+        });
+      }
+      applied++;
     });
     if (!applied) { toast('회수 구간이 없어 반영할 Layer가 없습니다'); return; }
     persist();
@@ -172,7 +196,10 @@
     renderLayer();
     toast(P.name + '에 반영 · Layer 소진 + 대시보드 자동 갱신');
   }
-  function persist() { try { if (typeof saveAll === 'function') saveAll(); else if (typeof state !== 'undefined') localStorage.setItem('gra_v34_layers', JSON.stringify(state.layers)); } catch (e) {} }
+  function persist() {
+    try { if (typeof saveAll === 'function') saveAll(); else if (typeof state !== 'undefined') localStorage.setItem('gra_v34_layers', JSON.stringify(state.layers)); } catch (e) {}
+    try { if (typeof state !== 'undefined') localStorage.setItem('gra_v37_layer_claims', JSON.stringify(state.layerClaims || [])); } catch (e) {}
+  }
   // 최초 1회: 모든 Layer 복원 적용 해제(기본 미적용). 이후 사용자가 토글하면 유지.
   var _reinstReset = false;
   function resetAllReinstatementsOnce() {
@@ -212,7 +239,14 @@
       .map(function (x) { return '<div class="k"><div class="l">' + x[0] + '</div><div class="v">' + x[1] + '</div></div>'; }).join('');
     $('progCards').innerHTML = PROGS.map(function (P) {
       var layers = P.layers.map(function (L, i) {
-        if (i === 0) return '<div class="layer"><div class="lr"><div><span class="lname">' + L.n + '</span><span class="lrange">' + L.lo + '~' + L.hi + '억 · ' + L.lead + '</span></div><div class="lstat">회사 보유 구간</div></div></div>';
+        if (i === 0) {
+          var rbase = L.limit, rused = usedOf(lsFor(P.key, L.n)), rrem = Math.max(0, rbase - rused), rpct = rbase ? Math.min(100, rused / rbase * 100) : 0;
+          var rcol = rpct >= 85 ? 'var(--red)' : rpct >= 60 ? 'var(--amber)' : 'var(--green)';
+          return '<div class="layer"><div class="lr"><div><span class="lname">' + L.n + ' <span class="mini">(회사보유)</span></span><span class="lrange">보유한도 ' + won(rbase) + ' · ' + L.lo + '~' + L.hi + '억 · ' + L.lead + '</span></div>'
+            + '<div class="lstat">회사 보유손해 <b>' + won(rused) + '</b> / 보유한도 ' + won(rbase) + ' · 잔여 <b>' + won(rrem) + '</b></div></div>'
+            + '<div class="bar"><i style="width:' + rpct + '%;background:' + rcol + '"></i></div>'
+            + '<div class="foot"><span class="pct" style="color:' + rcol + '">' + Math.round(rpct) + '% 보유</span></div></div>';
+        }
         var base = baseOf(P.key, L), reinst = reinstOf(P.key, L), eff = base + reinst, used = usedOf(lsFor(P.key, L.n)), rem = Math.max(0, eff - used), pct = eff ? Math.min(100, used / eff * 100) : 0;
         var col = pct >= 85 ? 'var(--red)' : pct >= 60 ? 'var(--amber)' : 'var(--green)';
         var on = reinst > 0, prem = reinstPremium(P, L);
