@@ -329,6 +329,19 @@ app.post('/api/ai', async (req, res) => {
   }
 });
 
+// --- 데이터 초기화(관리자) — 초기 시드로 DB 재적재 -----------------------
+const seed = require('./prisma/seed');
+app.post('/api/admin/reset', auth.requireRole('ADMIN'), async (req, res) => {
+  try {
+    await seed.reseedDatabase();
+    try { await prisma.auditLog.create({ data: { entity: 'System', entityId: '-', action: 'reset', actor: req.user.empNo } }); } catch (e) {}
+    res.json({ ok: true, message: '초기 시드 데이터로 복원했습니다.' });
+  } catch (e) {
+    console.error('[reset] 실패:', e);
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // --- 정적 프론트엔드 ---------------------------------------------------
 app.use(express.static(CLIENT_DIR));
 app.get('/', (req, res) => res.sendFile(path.join(CLIENT_DIR, 'index.html')));

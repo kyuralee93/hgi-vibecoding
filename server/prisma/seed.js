@@ -64,20 +64,7 @@ async function clearAll() {
   await prisma.appMeta.deleteMany();
 }
 
-async function main() {
-  const force = process.env.SEED_FORCE === '1';
-  await seedUsers();
-
-  const existing = await prisma.contract.count();
-  if (existing > 0 && !force) {
-    console.log(`[seed] 이미 ${existing}건의 계약 존재 — 데이터 시드 건너뜀 (재적재: SEED_FORCE=1)`);
-    return;
-  }
-  if (force) {
-    console.log('[seed] SEED_FORCE=1 — 기존 데이터 전체 삭제');
-    await clearAll();
-  }
-
+async function loadSeed() {
   await prisma.contract.createMany({ data: rows('contracts') });
   await prisma.facInward.createMany({ data: rows('facInward') });
   await prisma.accident.createMany({ data: rows('accidents') });
@@ -134,11 +121,39 @@ async function main() {
   console.log('[seed] 적재 완료:', counts);
 }
 
-main()
-  .catch((e) => {
-    console.error('[seed] 실패:', e);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+// 초기 시드로 강제 재적재(데이터 초기화 버튼/관리 API에서 재사용). 사용자 계정은 보존.
+async function reseedDatabase() {
+  await seedUsers();
+  await clearAll();
+  await loadSeed();
+}
+
+async function main() {
+  const force = process.env.SEED_FORCE === '1';
+  await seedUsers();
+
+  const existing = await prisma.contract.count();
+  if (existing > 0 && !force) {
+    console.log(`[seed] 이미 ${existing}건의 계약 존재 — 데이터 시드 건너뜀 (재적재: SEED_FORCE=1)`);
+    return;
+  }
+  if (force) {
+    console.log('[seed] SEED_FORCE=1 — 기존 데이터 전체 삭제');
+    await clearAll();
+  }
+  await loadSeed();
+}
+
+module.exports = { reseedDatabase, loadSeed, clearAll, seedUsers };
+
+// CLI로 직접 실행할 때만 시드 수행(require 시에는 함수만 노출)
+if (require.main === module) {
+  main()
+    .catch((e) => {
+      console.error('[seed] 실패:', e);
+      process.exit(1);
+    })
+    .finally(async () => {
+      await prisma.$disconnect();
+    });
+}
